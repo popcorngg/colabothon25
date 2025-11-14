@@ -37,7 +37,7 @@ html, body {
 
 /* Balance Card */
 .balanceCard {
-  margin: 120px auto 48px auto;
+  margin: 70px auto 70px auto;
   max-width: 420px;
   height: 240px;
   perspective: 1000px;
