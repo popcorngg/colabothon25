@@ -16,6 +16,12 @@ export default function Dashboard({ onOpenAssistant }) {
           <span className="card-number">•••• •••• •••• 1234</span>
           <span className="card-expiry">12/28</span>
         </div>
+        <div className="back-card">
+          <div className="balanceCard-info">
+            <span className="full-card-number">6749 9153 2591 1234</span>
+            <span className="cvv">228</span>
+          </div>
+        </div>
       </div>
 
       <section className="transactions">

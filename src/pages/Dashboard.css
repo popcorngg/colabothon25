@@ -41,6 +41,7 @@ html, body {
   color: #1a1a1a;
   padding: 40px;
   border-radius: 24px;
+  backface-visibility: hidden;
   box-shadow: 
     0 20px 60px rgba(255, 215, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.1) inset;
@@ -48,6 +49,34 @@ html, body {
   max-width: 420px;
   position: relative;
   overflow: hidden;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s; /* Переход для переворота */
+  transform-style: preserve-3d; /* Сохраните 3D для дочерних элементов */
+}
+
+.card-inner.flipped {
+  transform: rotateY(180deg); /* Эффект переворота */
+}
+
+.back-card {
+  /* существующие стили */
+  position: absolute;
+  backface-visibility: hidden; /* Скрыть заднюю сторону, когда она обращена назад */
+  top: 0; /* Позиционируйте ее поверх передней стороны */
+  left: 0;
+}
+
+.front-card {
+  /* существующие стили */
+  backface-visibility: hidden; /* Скрыть переднюю сторону, когда она обращена назад */
+  position: absolute;
+  top: 0; /* Позиционируйте ее поверх задней стороны */
+  left: 0;
 }
 
 .balanceCard::before {
@@ -118,7 +147,19 @@ html, body {
   font-size: 14px;
   opacity: 0.7;
 }
-
+.back-card {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
+  color: #1a1a1a;
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 
+    0 20px 60px rgba(255, 215, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  margin: 120px auto 48px auto;
+  max-width: 420px;
+  position: relative;
+  overflow: hidden;
+}
 /* Transactions */
 .transactions {
   max-width: 500px;
