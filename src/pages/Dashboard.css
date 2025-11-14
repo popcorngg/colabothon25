@@ -1,188 +1,258 @@
-
-/* Bank logo top left */
-.bank-logo {
-  position: fixed;
-  top: 24px;
-  left: 32px;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.bank-logo-img {
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
-  background: #ffd700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  font-weight: bold;
-  color: #222;
-}
-.bank-logo-text {
-  font-size: 22px;
-  font-weight: 700;
-  color: #ffd700;
-  letter-spacing: 1px;
-  font-family: 'Montserrat', Arial, sans-serif;
-}
-
-/* Modern transaction history styles */
-.transactions {
-  max-width: 420px;
-  margin: 40px auto 32px auto;
-  background: none;
-  padding: 0;
-}
-.transactions-title {
-  font-size: 26px;
-  font-weight: 600;
-  margin-bottom: 18px;
-  color: #fff;
-  letter-spacing: 1px;
-  text-align: left;
-}
-.transactions-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.transaction {
-  background: rgba(255,255,255,0.04);
-  border-radius: 14px;
-  margin-bottom: 14px;
-  padding: 16px 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.transaction-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.transaction-type {
-  font-size: 15px;
-  font-weight: 500;
-  padding: 2px 10px;
-  border-radius: 6px;
-  background: rgba(0,0,0,0.12);
-  letter-spacing: 0.5px;
-}
-.transaction-type.income {
-  color: #ffd700;
-}
-.transaction-type.expense {
-  color: #888;
-}
-.transaction-amount {
-  font-size: 18px;
-  font-weight: 700;
-}
-.transaction-amount.income {
-  color: #ffd700;
-}
-.transaction-amount.expense {
-  color: #888;
-}
-.transaction-desc {
-  font-size: 14px;
-  color: #bbb;
-  margin-top: 2px;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background: black;
+  background: #0a0a0a;
   color: white;
-  font-family: Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .dashboard {
   min-height: 100vh;
-  background-color: black;
-  font-family: 'Montserrat', Arial, sans-serif;
+  background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+  padding: 20px;
+  font-family: 'Inter', sans-serif;
 }
+
+/* Bank logo */
+.bank-logo {
+  position: fixed;
+  top: 32px;
+  left: 32px;
+  z-index: 100;
+}
+
+.logo-image {
+  width: 70px;
+  height: auto;
+  filter: drop-shadow(0 4px 12px rgba(255, 215, 0, 0.3));
+  transition: transform 0.3s ease;
+}
+
+.logo-image:hover {
+  transform: scale(1.05);
+}
+
+/* Balance Card */
+.balanceCard {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
+  color: #1a1a1a;
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 
+    0 20px 60px rgba(255, 215, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  margin: 120px auto 48px auto;
+  max-width: 420px;
+  position: relative;
+  overflow: hidden;
+}
+
+.balanceCard::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.card-chip {
+  width: 50px;
+  height: 40px;
+  background: linear-gradient(135deg, #d4af37 0%, #f4e5b1 50%, #d4af37 100%);
+  border-radius: 8px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  position: relative;
+}
+
+.card-chip::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 4px;
+}
+
+.balanceCard h1 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+  opacity: 0.7;
+  text-transform: uppercase;
+}
+
+.amount {
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin: 12px 0 32px 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
 .balanceCard-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin-top: 18px;
-  font-size: 18px;
-  opacity: 0.85;
-}
-.card-number {
-  letter-spacing: 2px;
-  font-size: 20px;
-  user-select: none;
-}
-.card-expiry {
   font-size: 16px;
-  opacity: 0.7;
-}
-
-.balanceCard {
-  background: linear-gradient(135deg, #ffcc00 60%, #ffe066 100%);
-  color: #222;
-  padding: 32px 40px;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 1.5px 6px rgba(255,255,255,0.08) inset;
-  margin: 0 auto 32px auto;
-  max-width: 370px;
-  min-width: 280px;
-  text-align: left;
-  position: relative;
-  top: 32px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.balanceCard h1 {
-  font-size: 22px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  letter-spacing: 1.5px;
+  font-weight: 500;
   opacity: 0.8;
 }
 
-.amount {
-  font-size: 32px;
-  font-weight: bold;
-  letter-spacing: 2px;
-  margin-bottom: 0;
+.card-number {
+  letter-spacing: 3px;
+  font-size: 18px;
 }
 
-/* История */
-
-/* Плюс и минус */
-.plus {
-  background: #2e7d32;
+.card-expiry {
+  font-size: 14px;
+  opacity: 0.7;
 }
 
-.minus {
-  background: #c62828;
+/* Transactions */
+.transactions {
+  max-width: 500px;
+  margin: 0 auto 32px auto;
+  padding: 0 8px;
 }
 
-/* Кнопка ассистента */
-.assistantBtn {
-  background: #ffcc00;
-  color: black;
-  border: none;
-  width: 100%;
-  padding: 20px;
+.transactions-title {
   font-size: 24px;
-  font-weight: bold;
-  border-radius: 12px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.transactions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.transaction {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.3s ease;
   cursor: pointer;
 }
 
+.transaction:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 215, 0, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.transaction-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.income-icon {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+}
+
+.expense-icon {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(248, 113, 113, 0.3);
+}
+
+.transaction-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.transaction-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.transaction-date {
+  font-size: 13px;
+  color: #888;
+  font-weight: 500;
+}
+
+.transaction-amount {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.transaction-amount.income {
+  color: #4ade80;
+}
+
+.transaction-amount.expense {
+  color: #f87171;
+}
+
+/* Assistant Button */
+.assistantBtn {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #1a1a1a;
+  border: none;
+  width: 100%;
+  max-width: 500px;
+  margin: 32px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px 32px;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
+  letter-spacing: -0.3px;
+}
+
 .assistantBtn:hover {
-  background: #e6b800;
+  background: linear-gradient(135deg, #ffed4e 0%, #ffd700 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(255, 215, 0, 0.4);
+}
+
+.assistantBtn:active {
+  transform: translateY(0);
+}
+
+.btn-icon {
+  font-size: 22px;
 }
