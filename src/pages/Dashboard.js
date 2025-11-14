@@ -12,17 +12,48 @@ export default function Dashboard({ onOpenAssistant }) {
         </div>
       </div>
 
-      <div className="historyCard">
-        <h2>Transaction History</h2>
 
-        <ul className="historyList">
-          <li className="item plus">+ 200 zł — Salary</li>
-          <li className="item minus">- 50 zł — Grocery</li>
-          <li className="item minus">- 15 zł — Pharmacy</li>
-          <li className="item minus">- 10 zł — Coffee</li>
-          <li className="item plus">+ 100 zł — Gift</li>
+
+      <section className="transactions">
+        <h2 className="transactions-title">Transaction History</h2>
+        <ul className="transactions-list">
+          <li className="transaction">
+            <div className="transaction-row">
+              <span className="transaction-type income">Income</span>
+              <span className="transaction-amount income">+200 zł</span>
+            </div>
+            <div className="transaction-desc">Salary • 12 Nov 2025</div>
+          </li>
+          <li className="transaction">
+            <div className="transaction-row">
+              <span className="transaction-type expense">Expense</span>
+              <span className="transaction-amount expense">-50 zł</span>
+            </div>
+            <div className="transaction-desc">Grocery • 11 Nov 2025</div>
+          </li>
+          <li className="transaction">
+            <div className="transaction-row">
+              <span className="transaction-type expense">Expense</span>
+              <span className="transaction-amount expense">-15 zł</span>
+            </div>
+            <div className="transaction-desc">Pharmacy • 10 Nov 2025</div>
+          </li>
+          <li className="transaction">
+            <div className="transaction-row">
+              <span className="transaction-type expense">Expense</span>
+              <span className="transaction-amount expense">-10 zł</span>
+            </div>
+            <div className="transaction-desc">Coffee • 10 Nov 2025</div>
+          </li>
+          <li className="transaction">
+            <div className="transaction-row">
+              <span className="transaction-type income">Income</span>
+              <span className="transaction-amount income">+100 zł</span>
+            </div>
+            <div className="transaction-desc">Gift • 09 Nov 2025</div>
+          </li>
         </ul>
-      </div>
+      </section>
 
       <button className="assistantBtn" onClick={onOpenAssistant}>
         Open AI Assistant
