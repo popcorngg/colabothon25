@@ -1,7 +1,17 @@
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: black;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
 .dashboard {
-  padding: 20px;
+  min-height: 100vh;
   background-color: black;
-  font-family: Arial;
+  font-family: Arial, sans-serif;
 }
 
 /* Карточка с балансом */
