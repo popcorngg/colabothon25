@@ -1,0 +1,77 @@
+.dashboard {
+  padding: 20px;
+  background-color: black;
+  font-family: Arial;
+}
+
+/* Карточка с балансом */
+.balanceCard {
+  background: #ffcc00;
+  color: black;
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.balanceCard h1 {
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.amount {
+  font-size: 38px;
+  font-weight: bold;
+}
+
+/* История */
+.historyCard {
+  background: #222;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.historyCard h2 {
+  font-size: 24px;
+  margin-bottom: 15px;
+}
+
+.historyList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  font-size: 20px;
+}
+
+/* Плюс и минус */
+.plus {
+  background: #2e7d32;
+}
+
+.minus {
+  background: #c62828;
+}
+
+/* Кнопка ассистента */
+.assistantBtn {
+  background: #ffcc00;
+  color: black;
+  border: none;
+  width: 100%;
+  padding: 20px;
+  font-size: 24px;
+  font-weight: bold;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.assistantBtn:hover {
+  background: #e6b800;
+}
