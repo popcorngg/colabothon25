@@ -1,25 +1,74 @@
+import { useState } from 'react';
 import "./Dashboard.css";
 import logo from './logo.png';
 
 export default function Dashboard({ onOpenAssistant }) {
+  const [isFlipped, setIsFlipped] = useState(false);
+
   return (
     <div className="dashboard">
       <div className="bank-logo">
         <img src={logo} alt="Bank Logo" className="logo-image"/>
       </div>
       
-      <div className="balanceCard">
-        <div className="card-chip"></div>
-        <h1>BALANCE</h1>
-        <p className="amount">1,520.30 zł</p>
-        <div className="balanceCard-info">
-          <span className="card-number">•••• •••• •••• 1234</span>
-          <span className="card-expiry">12/28</span>
-        </div>
-        <div className="back-card">
-          <div className="balanceCard-info">
-            <span className="full-card-number">6749 9153 2591 1234</span>
-            <span className="cvv">228</span>
+      <div className="balanceCard" onClick={() => setIsFlipped(!isFlipped)}>
+        <div className={`card-inner ${isFlipped ? 'flipped' : ''}`}>
+          {/* Front of Card */}
+          <div className="front-card">
+            <div className="card-chip"></div>
+            <h1>BALANCE</h1>
+            <p className="amount">1,520.30 zł</p>
+            <div className="balanceCard-info">
+              <span className="card-number">•••• •••• •••• 1234</span>
+              <span className="card-expiry">12/28</span>
+            </div>
+          </div>
+
+          {/* Back of Card */}
+          <div className="back-card">
+            <div style={{ 
+              marginBottom: '24px', 
+              fontSize: '13px', 
+              fontWeight: '600', 
+              letterSpacing: '2px', 
+              opacity: '0.7', 
+              textTransform: 'uppercase' 
+            }}>
+              CARD DETAILS
+            </div>
+            
+            <div style={{ marginBottom: '32px' }}>
+              <div style={{ fontSize: '14px', opacity: '0.7', marginBottom: '8px' }}>
+                Card Number
+              </div>
+              <div style={{ fontSize: '20px', fontWeight: '600', letterSpacing: '2px' }}>
+                6749 9153 2591 1234
+              </div>
+            </div>
+            
+            <div className="balanceCard-info">
+              <div>
+                <div style={{ fontSize: '12px', opacity: '0.7', marginBottom: '4px' }}>
+                  Valid Thru
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: '600' }}>12/28</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', opacity: '0.7', marginBottom: '4px' }}>
+                  CVV
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: '600' }}>228</div>
+              </div>
+            </div>
+
+            <div style={{
+              marginTop: '32px',
+              fontSize: '12px',
+              opacity: '0.6',
+              textAlign: 'center'
+            }}>
+              Kliknij aby odwrócić kartę
+            </div>
           </div>
         </div>
       </div>
