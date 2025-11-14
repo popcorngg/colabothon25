@@ -14,24 +14,36 @@ html, body {
   font-family: Arial, sans-serif;
 }
 
-/* Карточка с балансом */
 .balanceCard {
-  background: #ffcc00;
-  color: black;
-  padding: 25px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  text-align: center;
+  background: linear-gradient(135deg, #ffcc00 60%, #ffe066 100%);
+  color: #222;
+  padding: 32px 40px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 1.5px 6px rgba(255,255,255,0.08) inset;
+  margin: 0 auto 32px auto;
+  max-width: 370px;
+  min-width: 280px;
+  text-align: left;
+  position: relative;
+  top: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .balanceCard h1 {
-  font-size: 28px;
-  margin-bottom: 10px;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: 1.5px;
+  opacity: 0.8;
 }
 
 .amount {
-  font-size: 38px;
+  font-size: 32px;
   font-weight: bold;
+  letter-spacing: 2px;
+  margin-bottom: 0;
 }
 
 /* История */
