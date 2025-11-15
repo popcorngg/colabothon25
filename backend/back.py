@@ -56,58 +56,138 @@ def get_financial_context():
     total_expenses = sum(abs(t['amount']) for t in USER_DATA['transactions'] if t['amount'] < 0)
     
     context = f"""
-=== ИНФОРМАЦИЯ О ФИНАНСАХ ПОЛЬЗОВАТЕЛЯ ===
-Текущий баланс: {USER_DATA['balance']} {USER_DATA['currency']}
-Номер карты: {USER_DATA['card_number']}
-Общий доход: {total_income} {USER_DATA['currency']}
-Общие расходы: {total_expenses} {USER_DATA['currency']}
-Чистый результат: {total_income - total_expenses} {USER_DATA['currency']}
+=== USER'S FINANCIAL DATA ===
+Current Balance: {USER_DATA['balance']} {USER_DATA['currency']}
+Card Number: {USER_DATA['card_number']}
+Total Income: {total_income} {USER_DATA['currency']}
+Total Expenses: {total_expenses} {USER_DATA['currency']}
+Net Result: {total_income - total_expenses} {USER_DATA['currency']}
 
-=== ПОСЛЕДНИЕ ТРАНЗАКЦИИ ===
+=== RECENT TRANSACTIONS ===
 """
     
     for t in USER_DATA['transactions']:
         symbol = "+" if t['amount'] > 0 else "-"
-        context += f"- [{t['date']}] {t['name']}: {symbol}{abs(t['amount'])} {USER_DATA['currency']} (категория: {t['category']})\n"
+        context += f"- [{t['date']}] {t['name']}: {symbol}{abs(t['amount'])} {USER_DATA['currency']} (category: {t['category']})\n"
     
     return context
 
+def get_app_structure():
+    """Формирует контекст со структурой приложения и его функциями"""
+    structure = """
+=== BANKING APP STRUCTURE & FEATURES ===
+
+📱 MAIN SECTIONS (Tabs/Pages):
+
+1. HOME / DASHBOARD
+   - Shows current balance and card number
+   - Displays quick financial summary
+   - Recent transactions preview (last 5)
+   - Quick actions buttons
+
+2. TRANSACTIONS / HISTORY
+   - Full list of all transactions
+   - Each transaction shows:
+     * Transaction name
+     * Amount (+ for income, - for expenses)
+     * Date
+     * Category (salary, groceries, health, food, gift, etc.)
+   - Filterable by type (income/expense)
+   - Sortable by date
+
+3. ANALYTICS / STATISTICS
+   - Visual charts and graphs
+   - Spending by category breakdown
+   - Income vs Expenses comparison
+   - Monthly trends
+   - Budget insights
+
+4. AI ASSISTANT (Current Chat)
+   - Natural language financial advisor
+   - Can answer questions about user's finances
+   - Provides budget recommendations
+   - Helps with financial planning
+   - Access to all user's financial data
+
+5. SETTINGS / PROFILE
+   - Account settings
+   - Notification preferences
+   - Security settings
+   - Language selection
+
+🔧 AVAILABLE ACTIONS:
+- View balance
+- Review transactions
+- Analyze spending patterns
+- Get financial advice
+- Plan budget
+- Track expenses by category
+- Compare income vs expenses
+
+💡 WHAT YOU CAN HELP WITH:
+- "Show me my balance" → provide current balance
+- "What did I spend on groceries?" → analyze grocery transactions
+- "How much did I earn this month?" → calculate total income
+- "Where do I see my transactions?" → explain Transactions tab
+- "How to check analytics?" → explain Analytics section
+- "Give me budget advice" → analyze data and provide recommendations
+- "What's my biggest expense?" → identify largest spending category
+"""
+    return structure
+
 AVAILABLE_MODEL = get_available_model()
 
-def call_openrouter(prompt, retry_count=0, max_retries=2):
-    """Отправляет запрос к OpenRouter API с контекстом финансовых данных"""
+def call_openrouter(prompt, retry_count=0, max_retries=2, current_page=None):
+    """Отправляет запрос к OpenRouter API с контекстом финансовых данных и структуры приложения"""
     print(f"[DEBUG] Получен запрос: {prompt}")
+    print(f"[DEBUG] Текущая страница: {current_page}")
     print(f"[DEBUG] Используем модель: {AVAILABLE_MODEL} (попытка {retry_count + 1})")
     
     try:
         # Формируем контекст с информацией пользователя
         financial_context = get_financial_context()
+        app_structure = get_app_structure()
         
-        # УЛУЧШЕННЫЙ системный промпт - более гибкий и естественный
-        system_prompt = f"""You are a smart financial assistant for a banking app named "FinBot". 
+        # Добавляем информацию о текущей странице, если она передана
+        current_page_info = ""
+        if current_page:
+            current_page_info = f"\n🎯 USER IS CURRENTLY ON: {current_page.upper()} PAGE\n"
+        
+        # УЛУЧШЕННЫЙ системный промпт с информацией о структуре приложения
+        system_prompt = f"""You are "FinBot" - an intelligent AI assistant integrated into a banking mobile application. 
 
-Your main specialization is helping users with finances, but you can also:
-- Answer general questions
-- Help with budget planning
-- Give advice on saving money
-- Explain financial terms
-- Maintain friendly conversations
-- Analyze expenses and income
+{app_structure}
 
-You have access to the current user's financial data:
+{current_page_info}
+
 {financial_context}
 
-IMPORTANT RULES:
-1. ALWAYS respond in the SAME LANGUAGE as the user's message (English, Russian, Polish, etc.)
-2. If the question is about user's finances - use their data from the context
-3. If it's a general question - respond as a regular helpful assistant
-4. If unsure about something - honestly admit it
-5. Use currency zł (złoty) when talking about user's finances
-6. Give specific recommendations and examples
-7. Be concise - 2-4 sentences for simple questions, more for complex ones
-8. Detect the language of the user's input and reply in that exact language
+🎯 YOUR CAPABILITIES:
+1. **Navigation Help**: Guide users through the app's sections and features
+2. **Financial Analysis**: Analyze user's transactions, income, and expenses
+3. **Budget Advice**: Provide personalized financial recommendations
+4. **Feature Explanation**: Explain what each section of the app does
+5. **Data Insights**: Answer specific questions about user's financial data
+6. **General Assistance**: Help with any banking or financial questions
 
-Current date: {datetime.now().strftime("%d %B %Y")}"""
+📋 RESPONSE GUIDELINES:
+1. **Language Matching**: ALWAYS respond in the SAME LANGUAGE as the user's question
+2. **Context Awareness**: If user asks "where can I see X?", tell them which tab/section to use
+3. **Be Specific**: Reference actual numbers from user's data when relevant
+4. **Be Helpful**: If user seems lost, proactively suggest relevant features
+5. **Navigation**: When directing users, use clear section names (Home, Transactions, Analytics, Settings)
+6. **Current Location**: Consider which page user is on and provide contextual help
+7. **Concise**: 2-4 sentences for simple questions, detailed explanations when needed
+
+💬 EXAMPLE INTERACTIONS:
+- "Where can I see all my transactions?" → "Go to the Transactions tab to see your complete transaction history..."
+- "What's my balance?" → "Your current balance is [amount] zł..."
+- "How much did I spend on food?" → "Looking at your transactions, you spent [X] zł on food..."
+- "What does Analytics show?" → "The Analytics section provides visual charts showing your spending by category..."
+
+Current date: {datetime.now().strftime("%d %B %Y")}
+
+Remember: You have full access to the user's financial data and complete knowledge of the app's structure. Use this to provide accurate, helpful, and contextual assistance!"""
         
         # Если API ключ не установлен, используем mock ответ
         if not OPENROUTER_API_KEY:
@@ -156,7 +236,7 @@ Current date: {datetime.now().strftime("%d %B %Y")}"""
                 wait_time = 2 ** retry_count  # Экспоненциальная задержка: 1s, 2s, 4s
                 print(f"[DEBUG] Ожидание {wait_time} секунд...")
                 time.sleep(wait_time)
-                return call_openrouter(prompt, retry_count + 1, max_retries)
+                return call_openrouter(prompt, retry_count + 1, max_retries, current_page)
             else:
                 return "⚠️ Сервис временно перегружен. Пожалуйста, попробуйте через минуту или используйте платную модель для стабильной работы."
                 
@@ -193,17 +273,19 @@ def neural_action():
     """Обрабатывает запросы к AI ассистенту"""
     body = request.json
     user_input = body.get("input", "").strip()
+    current_page = body.get("current_page", None)  # Опциональная информация о текущей странице
 
     if not user_input:
         return jsonify({"error": "Введите сообщение"}), 400
 
-    # Получаем ответ от нейросети
-    result = call_openrouter(user_input)
+    # Получаем ответ от нейросети с учетом текущей страницы
+    result = call_openrouter(user_input, current_page=current_page)
     
     return jsonify({
         "result": result,
         "timestamp": datetime.now().isoformat(),
-        "model": AVAILABLE_MODEL
+        "model": AVAILABLE_MODEL,
+        "current_page": current_page
     })
 
 
@@ -227,6 +309,12 @@ def get_user_context():
     """Возвращает финансовый контекст в текстовом формате"""
     context = get_financial_context()
     return jsonify({"context": context})
+
+@app.route("/api/app/structure", methods=["GET"])
+def get_app_info():
+    """Возвращает информацию о структуре приложения"""
+    structure = get_app_structure()
+    return jsonify({"structure": structure})
 
 
 if __name__ == "__main__":
