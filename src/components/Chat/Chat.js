@@ -45,7 +45,7 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat, isOp
       const data = await response.json();
       const aiMessage = {
         id: Date.now() + 1,
-        text: data.result || 'No response from AI',
+        text: data.result || 'No response received from AI',
         sender: 'ai'
       };
 
@@ -55,10 +55,10 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat, isOp
       speak(aiMessage.text);
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Chat error:', error);
       const errorMessage = {
         id: Date.now() + 1,
-        text: 'Error retrieving response',
+        text: 'Failed to retrieve response',
         sender: 'ai'
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -105,29 +105,29 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat, isOp
       wsRef.current.onmessage = (ev) => {
         try {
           const data = JSON.parse(ev.data);
-          // Process only final results to avoid duplicates
+          // Process final results only to avoid duplicates
           const cmd = (data.final || '').toLowerCase();
           if (!cmd) return;
 
-          // Check for Bobby keyword
+          // Detect Bobby keyword
           if (cmd.includes('bobby')) {
             const cleaned = cmd.split('bobby')[1]?.trim() || '';
             if (cleaned.length > 0) {
-              // If chat is closed, notify parent to open it
+              // Open chat if closed, otherwise send message
               if (!actualIsOpen && onBobbyDetected) {
                 onBobbyDetected(cleaned);
               } else {
-                // If chat is already open, send message directly
+                // Send message directly if chat is open
                 sendMessage(cleaned, true);
               }
             }
           }
         } catch (err) {
-          console.error('Voice parsing error:', err);
+          console.error('Voice data parsing error:', err);
         }
       };
 
-      wsRef.current.onerror = (err) => console.error('Voice WS error:', err);
+      wsRef.current.onerror = (err) => console.error('Voice WebSocket error:', err);
       wsRef.current.onclose = () => console.log('Voice connection closed');
 
       // Start audio stream
@@ -159,7 +159,7 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat, isOp
 
       setIsListening(true);
     } catch (err) {
-      console.error('Voice initialization error:', err);
+      console.error('Voice system initialization error:', err);
     }
   }, [sendMessage, isOpen, onBobbyDetected]);
 
@@ -196,9 +196,9 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat, isOp
             {messages.length === 0 ? (
               <div className="chat-empty">
                 <div className="empty-icon">💬</div>
-                <p>Start a conversation with AI Assistant</p>
-                <p className="empty-hint">Ask questions about finances, budgeting, and other topics</p>
-                <p className="empty-hint" style={{ marginTop: '12px', fontSize: '11px' }}>💡 Say "Bobby" to use voice control</p>
+                <p>Start a conversation</p>
+                <p className="empty-hint">Ask me anything - finance, budgeting, and more</p>
+                <p className="empty-hint" style={{ marginTop: '12px', fontSize: '11px' }}>💡 Say "Bobby" for voice control</p>
               </div>
             ) : (
               messages.map(message => (
@@ -232,7 +232,7 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat, isOp
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Type a message..."
+              placeholder="Type your message..."
               disabled={loading}
               className="chat-input"
             />

@@ -9,24 +9,24 @@ export default function Blik() {
   const [timeLeft, setTimeLeft] = useState(120);
   const [expired, setExpired] = useState(false);
 
-  // Генерація 6-значного коду
+  // Generate 6-digit code
   function generateBlikCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  // Оновити код вручну
+  // Refresh code manually
   const handleRefresh = () => {
     setBlikCode(generateBlikCode());
     setTimeLeft(120);
     setExpired(false);
   };
 
-  // Копіювати код
+  // Copy code
   const handleCopy = () => {
     navigator.clipboard.writeText(blikCode);
   };
 
-  // Таймер
+  // Timer
   React.useEffect(() => {
     if (expired) return;
     if (timeLeft === 0) {
@@ -39,13 +39,13 @@ export default function Blik() {
     return () => clearTimeout(timer);
   }, [timeLeft, expired]);
 
-  // Генерувати код при вході
+  // Generate code on load
   React.useEffect(() => {
     handleRefresh();
     // eslint-disable-next-line
   }, []);
 
-  // Форматування часу
+  // Format time
   function formatTime(sec) {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
@@ -78,16 +78,16 @@ export default function Blik() {
         <div className="blik-actions">
           <button onClick={handleCopy}>Copy</button>
           {!expired ? (
-            <button onClick={handleRefresh}>Refresh code</button>
+            <button onClick={handleRefresh}>Refresh</button>
           ) : (
-            <button onClick={handleRefresh}>Generate new code</button>
+            <button onClick={handleRefresh}>New Code</button>
           )}
         </div>
         <div className="blik-timer">
           {!expired ? (
-            <span>Valid for: {formatTime(timeLeft)}</span>
+            <span>Expires in: {formatTime(timeLeft)}</span>
           ) : (
-            <span style={{color: 'red'}}>Code expired</span>
+            <span style={{color: 'red'}}>Code Expired</span>
           )}
         </div>
       </div>
