@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import "./Dashboard.css";
 import logo from './logo.png';
 import { useNavigate } from 'react-router-dom';
+import { useSpeech } from '../../hooks/useSpeech';
 
 export default function Dashboard() {
   const nav = useNavigate();
+  const { speak, stop, isSpeaking } = useSpeech();
   const [isFlipped, setIsFlipped] = useState(false);
   const [neuralInput, setNeuralInput] = useState("");
   const [neuralResponse, setNeuralResponse] = useState("");
@@ -31,11 +33,17 @@ export default function Dashboard() {
       });
 
       const data = await response.json();
-      setNeuralResponse(data.result || "Нет ответа от нейросети");
+      const result = data.result || "Нет ответа от нейросети";
+      setNeuralResponse(result);
+      
+      // Озвучиваем ответ на его языке
+      speak(result);
 
     } catch (error) {
       console.error("Ошибка вызова API:", error);
-      setNeuralResponse("Ошибка вызова API");
+      const errorMsg = "Ошибка вызова API";
+      setNeuralResponse(errorMsg);
+      speak(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -143,11 +151,43 @@ export default function Dashboard() {
           onChange={(e) => setNeuralInput(e.target.value)}
           placeholder="Введите запрос к нейронке"
           disabled={loading}
+          onKeyPress={(e) => e.key === 'Enter' && handleNeuralAction()}
         />
         <button onClick={handleNeuralAction} disabled={loading}>
           {loading ? "Обработка..." : "Отправить"}
         </button>
         <p>Ответ: {neuralResponse}</p>
+        
+        {neuralResponse && neuralResponse !== "...Идет обработка запроса..." && (
+          <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+            {!isSpeaking ? (
+              <button 
+                onClick={() => speak(neuralResponse)}
+                style={{ background: '#28a745', color: 'white', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                ▶️ Читать ответ
+              </button>
+            ) : (
+              <>
+                <button 
+                  onClick={stop}
+                  style={{ background: '#dc3545', color: 'white', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  ⏹️ Остановить
+                </button>
+                <button 
+                  onClick={() => speak(neuralResponse)}
+                  style={{ background: '#ffc107', color: 'black', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  🔄 Читать заново
+                </button>
+              </>
+            )}
+            <span style={{ alignSelf: 'center', fontSize: '14px', opacity: '0.7' }}>
+              {isSpeaking ? '🔊 Озвучивается...' : ''}
+            </span>
+          </div>
+        )}
       </section>
     </div>
   );

@@ -101,6 +101,10 @@ function App() {
                     .then(res => res.json())
                     .then(data => {
                       console.log("🟦 Neural response:", data);
+                      // Озвучиваем ответ AI на его языке
+                      if (data.result) {
+                        speak(data.result);
+                      }
                     })
                     .catch(err => console.error("🟥 Neural API error:", err));
                 } catch (error) {
@@ -168,7 +172,6 @@ function App() {
       }
     };
 
-    // запуск после первого клика
     const clickHandler = () => startAudio();
     document.body.addEventListener("click", clickHandler, { once: true });
 
@@ -182,7 +185,7 @@ function App() {
       if (audioContext) audioContext.close();
       if (micStream) micStream.getTracks().forEach((t) => t.stop());
     };
-  }, [navigate]);
+  }, []);
 
   return (
     <div className="App">
