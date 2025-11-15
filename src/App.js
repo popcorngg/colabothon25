@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
-import { useSpeech } from "./hooks/useSpeech";
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, Outlet, useLocation } from "react-router-dom";
 
 import Dashboard from "./pages/dash/Dashboard";
 import Blik from "./pages/blik/blik";
 import Trans from "./pages/trans/trans";
 import Currency from "./pages/currency/cur";
 import Support from "./pages/support/sup";
+import FloatingChat from './components/FloatingChat';
+import Login from "./pages/Login/login";
+import { auth } from './pages/firebase';
+
+
+function ProtectedRoute() {
+  const isAuthenticated = localStorage.getItem('userToken');
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+}
 
 function AppWrapper() {
   return (
@@ -18,8 +26,31 @@ function AppWrapper() {
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [voiceStarted, setVoiceStarted] = useState(false);
-  const { speak } = useSpeech();
+  
+  /*
+   useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        console.log("✅ User logged in:", user.email);
+        localStorage.setItem('userToken', user.uid);
+        localStorage.setItem('userEmail', user.email);
+        
+        if (location.pathname === '/login') {
+          navigate('/');
+        }
+      } else {
+        console.log("❌ No user");
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('userEmail');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate, location]);
+ 
+  */
 
   useEffect(() => {
     let ws = null;
@@ -158,15 +189,24 @@ function App() {
 
   return (
     <div className="App">
+      <FloatingChat />
+
       <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/blik" element={<Blik />} />
-        <Route path="/trans" element={<Trans />} />
-        <Route path="/currency" element={<Currency />} />
-        <Route path="/support" element={<Support />} />
+        {/* public */}
+        <Route path="/login" element={<Login />} />
+
+        {/* protected */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/blik" element={<Blik />} />
+          <Route path="/trans" element={<Trans />} />
+          <Route path="/currency" element={<Currency />} />
+          <Route path="/support" element={<Support />} />
+        </Route>
       </Routes>
     </div>
   );
 }
 
 export default AppWrapper;
+export { App };
