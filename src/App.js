@@ -9,7 +9,7 @@ import Currency from "./pages/currency/cur";
 import Support from "./pages/support/sup";
 import FloatingChat from './components/FloatingChat';
 import Login from "./pages/Login/login";
-import { auth } from './pages/firebase';
+import { auth } from './firebase';
 import Analitics from "./pages/analitics/anal";
 import Contacs from "./pages/contacts/cont";
 
