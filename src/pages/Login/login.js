@@ -2,35 +2,26 @@ import React, { useEffect } from "react";
 import './login.css';
 import { useNavigate } from 'react-router-dom';
 import { GoogleOutlined, FacebookOutlined } from '@ant-design/icons';
-import { auth } from '../firebase';
-import { signInWithPopup, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
+import firebase, { auth } from '../firebase';
 
 const Login = () => {
     const navigate = useNavigate();
 
-    const handleGoogleLogin = async () => {
-        try {
-            const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
-            console.log("✅ Login successful:", result.user.email);
-            navigate('/');
-        } catch (error) {
-            console.error("❌ Login error:", error.message);
-            alert("Ошибка входа: " + error.message);
-        }
-    };
-
-    const handleFacebookLogin = async () => {
-        try {
-            const provider = new FacebookAuthProvider();
-            const result = await signInWithPopup(auth, provider);
-            console.log("✅ Login successful:", result.user.email);
-            navigate('/');
-        } catch (error) {
-            console.error("❌ Login error:", error.message);
-            alert("Ошибка входа: " + error.message);
-        }
-    };
+    /*
+    useEffect(() => {
+        auth.getRedirectResult()
+            .then((result) => {
+                if (result.user) {
+                    console.log("✅ Login successful:", result.user.email);
+                    navigate('/');
+                }
+            })
+            .catch((error) => {
+                console.error("❌ Login error:", error.message);
+                alert("Ошибка входа: " + error.message);
+            });
+    }, [navigate]);
+    */ 
 
     return (
         <div id="login-page">
@@ -39,7 +30,7 @@ const Login = () => {
 
                 <div
                     className="login-button-google"
-                    onClick={handleGoogleLogin}
+                    onClick={() => auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider())}
                 >
                     <GoogleOutlined /> Sign in with Google
                 </div>
@@ -48,7 +39,7 @@ const Login = () => {
 
                 <div
                     className="login-button-facebook"
-                    onClick={handleFacebookLogin}
+                    onClick={() => auth.signInWithRedirect(new firebase.auth.FacebookAuthProvider())}
                 >
                     <FacebookOutlined /> Sign in with Facebook
                 </div>
