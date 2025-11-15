@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, forwardRef } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useCallback } from 'react';
 import './Chat.css';
 import { useSpeech } from '../../hooks/useSpeech';
 
@@ -17,6 +17,52 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Define sendMessage as useCallback to use it in useEffect
+  const sendMessage = useCallback(async (messageText, isVoice) => {
+    // Add user message to chat
+    const userMessage = { id: Date.now(), text: messageText, sender: 'user' };
+    setMessages(prev => [...prev, userMessage]);
+    
+    if (!isVoice) {
+      setInput('');
+    }
+    
+    setLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/neural-action', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ input: messageText })
+      });
+
+      const data = await response.json();
+      const aiMessage = {
+        id: Date.now() + 1,
+        text: data.result || 'No response from AI',
+        sender: 'ai'
+      };
+
+      setMessages(prev => [...prev, aiMessage]);
+      
+      // Speak the response
+      speak(aiMessage.text);
+
+    } catch (error) {
+      console.error('Error:', error);
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: 'Error retrieving response',
+        sender: 'ai'
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setLoading(false);
+    }
+  }, [speak]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -30,7 +76,7 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
         sendMessage(pendingMessage, true);
       }, 100);
     }
-  }, [shouldOpenChat, pendingMessage]);
+  }, [shouldOpenChat, pendingMessage, sendMessage]);
 
   // Initialize voice recognition when chat opens
   useEffect(() => {
@@ -55,7 +101,8 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
       wsRef.current.onmessage = (ev) => {
         try {
           const data = JSON.parse(ev.data);
-          const cmd = (data.final || data.partial || '').toLowerCase();
+          // Process only final results to avoid duplicates
+          const cmd = (data.final || '').toLowerCase();
           if (!cmd) return;
 
           // Check for Bobby keyword
@@ -115,51 +162,6 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
   const handleSendMessage = async () => {
     if (!input.trim()) return;
     await sendMessage(input, false);
-  };
-
-  const sendMessage = async (messageText, isVoice) => {
-    // Add user message to chat
-    const userMessage = { id: Date.now(), text: messageText, sender: 'user' };
-    setMessages(prev => [...prev, userMessage]);
-    
-    if (!isVoice) {
-      setInput('');
-    }
-    
-    setLoading(true);
-
-    try {
-      const response = await fetch('http://localhost:5000/api/neural-action', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ input: messageText })
-      });
-
-      const data = await response.json();
-      const aiMessage = {
-        id: Date.now() + 1,
-        text: data.result || 'No response from AI',
-        sender: 'ai'
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-      
-      // Speak the response
-      speak(aiMessage.text);
-
-    } catch (error) {
-      console.error('Error:', error);
-      const errorMessage = {
-        id: Date.now() + 1,
-        text: 'Error retrieving response',
-        sender: 'ai'
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleKeyPress = (e) => {

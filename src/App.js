@@ -7,6 +7,7 @@ import Blik from "./pages/blik/blik";
 import Trans from "./pages/trans/trans";
 import Currency from "./pages/currency/cur";
 import Support from "./pages/support/sup";
+import FloatingChat from './components/FloatingChat';
 import Login from "./pages/Login/login";
 import { auth } from './pages/firebase';
 
@@ -154,8 +155,8 @@ function App() {
   const handleCommand = (cmd) => {
     console.log("🟦 Command ready:", cmd);
 
-    if (cmd.includes("jarvis")) {
-      const cleaned = cmd.split("jarvis")[1]?.trim() || "";
+    if (cmd.includes("bobby")) {
+      const cleaned = cmd.split("bobby")[1]?.trim() || "";
       if (cleaned) {
         fetch("http://localhost:5000/api/neural-action", {
           method: "POST",
@@ -193,6 +194,10 @@ function App() {
 
   return (
     <div className="App">
+      <FloatingChat 
+        ref={chatRef}
+        pendingBobbyMessage={pendingBobbyMessage}
+      />
      
       <Routes>
         <Route path="/" element={<Dashboard />} />
