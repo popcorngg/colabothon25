@@ -1,21 +1,71 @@
-import React, { useState, useRef, useEffect, forwardRef } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useCallback } from 'react';
 import './Chat.css';
 import { useSpeech } from '../../hooks/useSpeech';
 
-const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, ref) => {
+const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat, isOpen: externalIsOpen, onIsOpenChange }, ref) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpenInternal] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef(null);
   const { speak } = useSpeech();
   const wsRef = useRef(null);
   const recognizerRef = useRef(null);
 
+  // Use external isOpen if provided, otherwise use internal state
+  const actualIsOpen = externalIsOpen !== undefined ? externalIsOpen : isOpen;
+  const setIsOpen = onIsOpenChange !== undefined ? onIsOpenChange : setIsOpenInternal;
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  // Define sendMessage as useCallback to use it in useEffect
+  const sendMessage = useCallback(async (messageText, isVoice) => {
+    // Add user message to chat
+    const userMessage = { id: Date.now(), text: messageText, sender: 'user' };
+    setMessages(prev => [...prev, userMessage]);
+    
+    if (!isVoice) {
+      setInput('');
+    }
+    
+    setLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/neural-action', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ input: messageText })
+      });
+
+      const data = await response.json();
+      const aiMessage = {
+        id: Date.now() + 1,
+        text: data.result || 'No response from AI',
+        sender: 'ai'
+      };
+
+      setMessages(prev => [...prev, aiMessage]);
+      
+      // Speak the response
+      speak(aiMessage.text);
+
+    } catch (error) {
+      console.error('Error:', error);
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: 'Error retrieving response',
+        sender: 'ai'
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setLoading(false);
+    }
+  }, [speak]);
 
   useEffect(() => {
     scrollToBottom();
@@ -30,11 +80,11 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
         sendMessage(pendingMessage, true);
       }, 100);
     }
-  }, [shouldOpenChat, pendingMessage]);
+  }, [shouldOpenChat, pendingMessage, sendMessage]);
 
   // Initialize voice recognition when chat opens
   useEffect(() => {
-    if (isOpen && !wsRef.current) {
+    if (actualIsOpen && !wsRef.current) {
       initializeVoiceRecognition();
     }
     return () => {
@@ -43,9 +93,9 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
         wsRef.current = null;
       }
     };
-  }, [isOpen]);
+  }, [actualIsOpen]);
 
-  const initializeVoiceRecognition = async () => {
+  const initializeVoiceRecognition = useCallback(async () => {
     try {
       wsRef.current = new WebSocket('ws://localhost:4269');
       wsRef.current.binaryType = 'arraybuffer';
@@ -55,7 +105,8 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
       wsRef.current.onmessage = (ev) => {
         try {
           const data = JSON.parse(ev.data);
-          const cmd = (data.final || data.partial || '').toLowerCase();
+          // Process only final results to avoid duplicates
+          const cmd = (data.final || '').toLowerCase();
           if (!cmd) return;
 
           // Check for Bobby keyword
@@ -63,7 +114,7 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
             const cleaned = cmd.split('bobby')[1]?.trim() || '';
             if (cleaned.length > 0) {
               // If chat is closed, notify parent to open it
-              if (!isOpen && onBobbyDetected) {
+              if (!actualIsOpen && onBobbyDetected) {
                 onBobbyDetected(cleaned);
               } else {
                 // If chat is already open, send message directly
@@ -110,56 +161,11 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
     } catch (err) {
       console.error('Voice initialization error:', err);
     }
-  };
+  }, [sendMessage, isOpen, onBobbyDetected]);
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
     await sendMessage(input, false);
-  };
-
-  const sendMessage = async (messageText, isVoice) => {
-    // Add user message to chat
-    const userMessage = { id: Date.now(), text: messageText, sender: 'user' };
-    setMessages(prev => [...prev, userMessage]);
-    
-    if (!isVoice) {
-      setInput('');
-    }
-    
-    setLoading(true);
-
-    try {
-      const response = await fetch('http://localhost:5000/api/neural-action', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ input: messageText })
-      });
-
-      const data = await response.json();
-      const aiMessage = {
-        id: Date.now() + 1,
-        text: data.result || 'No response from AI',
-        sender: 'ai'
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-      
-      // Speak the response
-      speak(aiMessage.text);
-
-    } catch (error) {
-      console.error('Error:', error);
-      const errorMessage = {
-        id: Date.now() + 1,
-        text: 'Error retrieving response',
-        sender: 'ai'
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleKeyPress = (e) => {
@@ -171,13 +177,13 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
 
   return (
     <>
-      {!isOpen && (
+      {!actualIsOpen && (
         <button className="chat-toggle-btn" onClick={() => setIsOpen(true)}>
           💬
         </button>
       )}
 
-      {isOpen && (
+      {actualIsOpen && (
         <div className="chat-container">
           <div className="chat-header">
             <h3>AI Assistant</h3>

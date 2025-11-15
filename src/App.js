@@ -7,10 +7,13 @@ import Blik from "./pages/blik/blik";
 import Trans from "./pages/trans/trans";
 import Currency from "./pages/currency/cur";
 import Support from "./pages/support/sup";
+import FloatingChat from './components/FloatingChat';
 import Login from "./pages/Login/login";
 import { auth } from './pages/firebase';
 import Analitics from "./pages/analitics/anal";
 import Contacs from "./pages/contacts/cont";
+
+
 
 function ProtectedRoute() {
   const isAuthenticated = localStorage.getItem('userToken');
@@ -30,6 +33,7 @@ function App() {
   const location = useLocation();
   const [voiceStarted, setVoiceStarted] = useState(false);
   const [pendingBobbyMessage, setPendingBobbyMessage] = useState(null);
+  const [chatCommand, setChatCommand] = useState(null);
   const { speak } = useSpeech();
   const chatRef = useRef(null);
 
@@ -154,21 +158,22 @@ function App() {
   const handleCommand = (cmd) => {
     console.log("🟦 Command ready:", cmd);
 
-    if (cmd.includes("jarvis")) {
-      const cleaned = cmd.split("jarvis")[1]?.trim() || "";
+    if (cmd.includes("bobby")) {
+      const cleaned = cmd.split("bobby")[1]?.trim() || "";
       if (cleaned) {
-        fetch("http://localhost:5000/api/neural-action", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ input: cleaned })
-        })
-          .then(res => res.json())
-          .then(data => {
-            console.log("🟦 Neural response:", data);
-            if (data.result) speak(data.result);
-          })
-          .catch(err => console.error("🟥 Neural API error:", err));
+        setPendingBobbyMessage(cleaned);
       }
+      return;
+    }
+
+    // Chat control commands
+    if (cmd === "open") {
+      setChatCommand("open");
+      return;
+    }
+
+    if (cmd === "close") {
+      setChatCommand("close");
       return;
     }
 
@@ -193,7 +198,12 @@ function App() {
 
   return (
     <div className="App">
-
+      <FloatingChat 
+        ref={chatRef}
+        pendingBobbyMessage={pendingBobbyMessage}
+        chatCommand={chatCommand}
+        onChatCommand={() => setChatCommand(null)}
+      />
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/blik" element={<Blik />} />

@@ -2,10 +2,22 @@ import React, { useState, useRef, useEffect, forwardRef } from 'react';
 import './FloatingChat.css';
 import Chat from './Chat/Chat';
 
-const FloatingChat = forwardRef(({ pendingBobbyMessage }, ref) => {
+const FloatingChat = forwardRef(({ pendingBobbyMessage, chatCommand, onChatCommand }, ref) => {
   const [pendingMessage, setPendingMessage] = useState(null);
   const [shouldOpenChat, setShouldOpenChat] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const chatRef = useRef(null);
+
+  // Handle chat commands from voice (open/close)
+  useEffect(() => {
+    if (chatCommand === "open") {
+      setIsOpen(true);
+      onChatCommand?.();
+    } else if (chatCommand === "close") {
+      setIsOpen(false);
+      onChatCommand?.();
+    }
+  }, [chatCommand, onChatCommand]);
 
   // Handle Bobby message from App.js
   useEffect(() => {
@@ -35,6 +47,8 @@ const FloatingChat = forwardRef(({ pendingBobbyMessage }, ref) => {
         onBobbyDetected={handleBobbyDetected}
         pendingMessage={pendingMessage}
         shouldOpenChat={shouldOpenChat}
+        isOpen={isOpen}
+        onIsOpenChange={setIsOpen}
       />
     </div>
   );
