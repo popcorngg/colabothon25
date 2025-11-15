@@ -9,6 +9,8 @@ import Currency from "./pages/currency/cur";
 import Support from "./pages/support/sup";
 import Login from "./pages/Login/login";
 import { auth } from './pages/firebase';
+import Analitics from "./pages/analitics/anal";
+import Contacs from "./pages/contacts/cont";
 
 function ProtectedRoute() {
   const isAuthenticated = localStorage.getItem('userToken');
@@ -199,6 +201,9 @@ function App() {
         <Route path="/currency" element={<Currency />} />
         <Route path="/support" element={<Support />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/analitics" element={<Analitics />}/>
+        <Route path="/contacs" element={<Contacs />}/>
+
       </Routes>
     </div>
   );

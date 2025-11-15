@@ -24,6 +24,166 @@ html, body {
   z-index: 100;
 }
 
+/* Upper Interface - Buttons Container */
+.upper-interface {
+  max-width: 420px;
+  margin: 30px auto 24px auto;
+  padding: 0 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Analysis Button */
+.analysisBtn {
+  width: 100%;
+  background: linear-gradient(135deg, #95a031 0%, #bad505 100%);
+  border: none;
+  color: white;
+  padding: 18px 24px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(190, 207, 6, 0.3);
+  position: relative;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+.analysisBtn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.analysisBtn:hover::before {
+  left: 100%;
+}
+
+.analysisBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(190, 207, 6, 0.4);
+}
+
+.analysisBtn:active {
+  transform: translateY(-1px);
+}
+
+.analysisBtn .btn-icon {
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.analysisBtn .btn-text {
+  flex: 1;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.analysisBtn .btn-arrow {
+  font-size: 20px;
+  font-weight: 700;
+  opacity: 0.8;
+  transition: transform 0.3s ease;
+}
+
+.analysisBtn:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+/* Contacts Button */
+.contactsBtn {
+  width: 100%;
+  background: linear-gradient(135deg, #95a031 0%, #bad505 100%);
+  border: none;
+  color: white;
+  padding: 18px 24px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(190, 207, 6, 0.3);
+  position: relative;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+.contactsBtn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.contactsBtn:hover::before {
+  left: 100%;
+}
+
+.contactsBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(190, 207, 6, 0.4);
+}
+
+.contactsBtn:active {
+  transform: translateY(-1px);
+}
+
+.contactsBtn .btn-icon {
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.contactsBtn .btn-text {
+  flex: 1;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.contactsBtn .btn-arrow {
+  font-size: 20px;
+  font-weight: 700;
+  opacity: 0.8;
+  transition: transform 0.3s ease;
+}
+
+.contactsBtn:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
 .logo-image {
   width: 70px;
   height: auto;
@@ -33,6 +193,11 @@ html, body {
 
 .logo-image:hover {
   transform: scale(1.05);
+}
+
+.analitics-page {
+  position: fixed;
+  z-index: 100;
 }
 
 .balanceCard {
