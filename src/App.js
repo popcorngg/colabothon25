@@ -55,7 +55,7 @@ function App() {
               navigate("/trans");
             } else if (cmd.includes("currency")) {
               navigate("/currency");
-            } else if (cmd.includes("blik")) {
+            } else if (cmd.includes("bleak")) {
               navigate("/blik");
             } else if (cmd.includes("support")) {
               navigate("/support");
