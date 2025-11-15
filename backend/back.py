@@ -152,6 +152,9 @@ def get_app_structure():
 
 def extract_text_from_pdf(file_content):
     """Извлекает текст из PDF файла"""
+    if PyPDF2 is None:
+        return "[ERROR] PyPDF2 не установлен. Установите: pip install PyPDF2"
+    
     try:
         pdf_file = BytesIO(file_content)
         pdf_reader = PyPDF2.PdfReader(pdf_file)
@@ -166,9 +169,10 @@ def extract_text_from_pdf(file_content):
         print(f"[ERROR] Ошибка при извлечении текста из PDF: {str(e)}")
         return None
 
-def analyze_document(file_content, filename, file_type):
+def analyze_document(file_content, filename, file_type, current_page=None):
     """Анализирует документ и возвращает краткую сводку"""
     print(f"[DEBUG] Анализ документа: {filename} ({file_type})")
+    print(f"[DEBUG] Текущая страница: {current_page or 'не указана'}")
     
     # Извлекаем текст в зависимости от типа файла
     if file_type == 'application/pdf':
@@ -208,7 +212,7 @@ Format the response clearly and concisely. If the document is a banking contract
     
     try:
         # Отправляем запрос к нейросети для анализа
-        result = call_openrouter(analysis_prompt, current_page="document_analysis")
+        result = call_openrouter(analysis_prompt, current_page=current_page or "document_analysis")
         
         return {
             "filename": filename,
@@ -237,7 +241,25 @@ def call_openrouter(prompt, retry_count=0, max_retries=2, current_page=None):
         # Добавляем информацию о текущей странице, если она передана
         current_page_info = ""
         if current_page:
-            current_page_info = f"\n🎯 USER IS CURRENTLY ON: {current_page.upper()} PAGE\n"
+            page_descriptions = {
+                "dashboard": "HOME/DASHBOARD - showing balance, quick actions, and recent transactions",
+                "transactions": "TRANSACTIONS PAGE - viewing full transaction history",
+                "analytics": "ANALYTICS PAGE - viewing charts and spending statistics",
+                "document_analysis": "DOCUMENT ANALYSIS PAGE - analyzing uploaded financial documents",
+                "settings": "SETTINGS PAGE - managing account preferences",
+                "support": "SUPPORT PAGE - getting help and assistance"
+            }
+            
+            page_desc = page_descriptions.get(current_page, current_page.upper())
+            current_page_info = f"\n🎯 USER IS CURRENTLY ON: {page_desc}\n"
+            
+            # Специальный контекст для анализа документов
+            if current_page == "document_analysis":
+                current_page_info += """
+📄 CONTEXT: User is analyzing a document (contract, agreement, etc.)
+You are helping them understand the document's contents, terms, and implications.
+Focus on clear explanations, highlighting important terms, risks, and required actions.
+"""
         
         # УЛУЧШЕННЫЙ системный промпт с информацией о структуре приложения
         system_prompt = f"""You are "FinBot" - an intelligent AI assistant integrated into a banking mobile application. 
@@ -415,6 +437,10 @@ def analyze_document_endpoint():
     if file.filename == '':
         return jsonify({"error": "Файл не выбран"}), 400
     
+    # Получаем информацию о текущей странице (опционально)
+    current_page = request.form.get('current_page', 'document_analysis')
+    print(f"[INFO] Запрос с страницы: {current_page}")
+    
     # Проверяем тип файла
     allowed_types = ['application/pdf', 'text/plain', 'text/html', 'text/markdown']
     if file.content_type not in allowed_types:
@@ -433,8 +459,8 @@ def analyze_document_endpoint():
         
         print(f"[INFO] Получен файл для анализа: {file.filename} ({file.content_type}, {len(file_content)} байт)")
         
-        # Анализируем документ
-        result = analyze_document(file_content, file.filename, file.content_type)
+        # Анализируем документ с передачей информации о текущей странице
+        result = analyze_document(file_content, file.filename, file.content_type, current_page)
         
         if "error" in result:
             return jsonify(result), 400
@@ -442,7 +468,8 @@ def analyze_document_endpoint():
         return jsonify({
             "success": True,
             "analysis": result,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "current_page": current_page
         })
         
     except Exception as e:

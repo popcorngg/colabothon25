@@ -2,16 +2,20 @@ import React, { useState, useRef, useEffect, forwardRef, useCallback } from 'rea
 import './Chat.css';
 import { useSpeech } from '../../hooks/useSpeech';
 
-const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, ref) => {
+const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat, isOpen: externalIsOpen, onIsOpenChange }, ref) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpenInternal] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef(null);
   const { speak } = useSpeech();
   const wsRef = useRef(null);
   const recognizerRef = useRef(null);
+
+  // Use external isOpen if provided, otherwise use internal state
+  const actualIsOpen = externalIsOpen !== undefined ? externalIsOpen : isOpen;
+  const setIsOpen = onIsOpenChange !== undefined ? onIsOpenChange : setIsOpenInternal;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -80,7 +84,7 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
 
   // Initialize voice recognition when chat opens
   useEffect(() => {
-    if (isOpen && !wsRef.current) {
+    if (actualIsOpen && !wsRef.current) {
       initializeVoiceRecognition();
     }
     return () => {
@@ -89,7 +93,7 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
         wsRef.current = null;
       }
     };
-  }, [isOpen]);
+  }, [actualIsOpen]);
 
   const initializeVoiceRecognition = useCallback(async () => {
     try {
@@ -110,7 +114,7 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
             const cleaned = cmd.split('bobby')[1]?.trim() || '';
             if (cleaned.length > 0) {
               // If chat is closed, notify parent to open it
-              if (!isOpen && onBobbyDetected) {
+              if (!actualIsOpen && onBobbyDetected) {
                 onBobbyDetected(cleaned);
               } else {
                 // If chat is already open, send message directly
@@ -173,13 +177,13 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
 
   return (
     <>
-      {!isOpen && (
+      {!actualIsOpen && (
         <button className="chat-toggle-btn" onClick={() => setIsOpen(true)}>
           💬
         </button>
       )}
 
-      {isOpen && (
+      {actualIsOpen && (
         <div className="chat-container">
           <div className="chat-header">
             <h3>AI Assistant</h3>
