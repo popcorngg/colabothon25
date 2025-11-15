@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import { useSpeech } from "./hooks/useSpeech";
 
 import Dashboard from "./pages/dash/Dashboard";
 import Blik from "./pages/blik/blik";
@@ -18,6 +19,7 @@ function AppWrapper() {
 function App() {
   const navigate = useNavigate();
   const [voiceStarted, setVoiceStarted] = useState(false);
+  const { speak } = useSpeech();
 
   useEffect(() => {
     let ws = null;
@@ -68,6 +70,10 @@ function App() {
                     .then(res => res.json())
                     .then(data => {
                       console.log("🟦 Neural response:", data);
+                      // Озвучиваем ответ AI на его языке
+                      if (data.result) {
+                        speak(data.result);
+                      }
                     })
                     .catch(err => console.error("🟥 Neural API error:", err));
                 } catch (error) {
@@ -149,7 +155,7 @@ function App() {
       if (audioContext) audioContext.close();
       if (micStream) micStream.getTracks().forEach((t) => t.stop());
     };
-  }, [navigate]);
+  }, []);
 
   return (
     <div className="App">
