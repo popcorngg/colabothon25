@@ -4,7 +4,7 @@ import logo from './logo.png';
 import { useNavigate } from 'react-router-dom';
 import { useSpeech } from '../../hooks/useSpeech';
 
-export default function Dashboard() {
+export default function Dashboard({ flipCard, onFlipCard }) {
   const nav = useNavigate();
   const { speak, stop, isSpeaking } = useSpeech();
   const [isFlipped, setIsFlipped] = useState(false);
@@ -12,23 +12,30 @@ export default function Dashboard() {
   const [neuralResponse, setNeuralResponse] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Новые состояния для работы с документами
+  // States for document handling
   const [selectedFile, setSelectedFile] = useState(null);
   const [documentAnalysis, setDocumentAnalysis] = useState("");
   const [uploadLoading, setUploadLoading] = useState(false);
+
+  // Sync voice flip command with card state
+  useEffect(() => {
+    if (flipCard !== undefined) {
+      setIsFlipped(flipCard);
+    }
+  }, [flipCard]);
 
   const handleBlick = () => nav('/blik');
   const handleSup = () => nav('/support');
   const handleCur = () => nav('/currency');
   const handleTrans = () => nav('/trans');
-  const handleAnal = () => nav('/analitics');
-  const handleCont = () => nav('/contacs');
+  const handleAnal = () => nav('/analytics');
+  const handleCont = () => nav('/contacts');
 
   const handleNeuralAction = async () => {
     if (!neuralInput.trim()) return;
 
     setLoading(true);
-    setNeuralResponse("...Идет обработка запроса...");
+    setNeuralResponse("...Processing request...");
 
     try {
       const response = await fetch("http://localhost:5000/api/neural-action", {
@@ -43,15 +50,15 @@ export default function Dashboard() {
       });
 
       const data = await response.json();
-      const result = data.result || "Нет ответа от нейросети";
+      const result = data.result || "No response from AI";
       setNeuralResponse(result);
 
-      // Озвучиваем ответ
+      // Speak the response
       speak(result);
 
     } catch (error) {
-      console.error("Ошибка вызова API:", error);
-      const errorMsg = "Ошибка вызова API";
+      console.error("API call error:", error);
+      const errorMsg = "API call error";
       setNeuralResponse(errorMsg);
       speak(errorMsg);
     } finally {
@@ -59,18 +66,18 @@ export default function Dashboard() {
     }
   };
 
-  // Обработка выбора файла
+  // Handle file selection
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
       const allowedTypes = ['application/pdf', 'text/plain', 'text/html', 'text/markdown'];
       if (!allowedTypes.includes(file.type)) {
-        alert('Неподдерживаемый тип файла. Используйте PDF, TXT, HTML или MD');
+        alert('Unsupported file type. Use PDF, TXT, HTML or MD');
         return;
       }
 
       if (file.size > 10 * 1024 * 1024) {
-        alert('Файл слишком большой. Максимум 10 МБ');
+        alert('File too large. Maximum 10 MB');
         return;
       }
 
@@ -79,15 +86,15 @@ export default function Dashboard() {
     }
   };
 
-  // Отправка файла на анализ
+  // Send file for analysis
   const handleDocumentAnalysis = async () => {
     if (!selectedFile) {
-      alert('Выберите файл для анализа');
+      alert('Select a file to analyze');
       return;
     }
 
     setUploadLoading(true);
-    setDocumentAnalysis("📄 Анализирую документ...");
+    setDocumentAnalysis("📄 Analyzing document...");
 
     try {
       const formData = new FormData();
@@ -105,13 +112,13 @@ export default function Dashboard() {
         setDocumentAnalysis(analysis);
         speak(analysis);
       } else {
-        const errorMsg = `Ошибка: ${data.error}`;
+        const errorMsg = `Error: ${data.error}`;
         setDocumentAnalysis(errorMsg);
         speak(errorMsg);
       }
     } catch (error) {
-      console.error("Ошибка анализа документа:", error);
-      const errorMsg = `Ошибка анализа: ${error.message}`;
+      console.error("Document analysis error:", error);
+      const errorMsg = `Analysis error: ${error.message}`;
       setDocumentAnalysis(errorMsg);
       speak(errorMsg);
     } finally {
