@@ -31,6 +31,7 @@ function App() {
   const location = useLocation();
   const [voiceStarted, setVoiceStarted] = useState(false);
   const [pendingBobbyMessage, setPendingBobbyMessage] = useState(null);
+  const [chatCommand, setChatCommand] = useState(null);
   const { speak } = useSpeech();
   const chatRef = useRef(null);
 
@@ -163,6 +164,17 @@ function App() {
       return;
     }
 
+    // Chat control commands
+    if (cmd === "open") {
+      setChatCommand("open");
+      return;
+    }
+
+    if (cmd === "close") {
+      setChatCommand("close");
+      return;
+    }
+
     if (cmd.includes("dashboard") || cmd.includes("back") || cmd.includes("main page")) navigate("/");
     else if (cmd.includes("transactions")) navigate("/trans");
     else if (cmd.includes("currency")) navigate("/currency");
@@ -187,6 +199,8 @@ function App() {
       <FloatingChat 
         ref={chatRef}
         pendingBobbyMessage={pendingBobbyMessage}
+        chatCommand={chatCommand}
+        onChatCommand={() => setChatCommand(null)}
       />
       <Routes>
         <Route path="/" element={<Dashboard />} />

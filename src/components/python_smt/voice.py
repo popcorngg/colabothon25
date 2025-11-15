@@ -41,8 +41,8 @@ from difflib import SequenceMatcher
 # Настройки
 # ───────────────────────────────
 MODEL_PATH = "model"          # путь к модели Vosk
-SILENCE_THRESHOLD = 0.8       # секунд тишины = фраза закончена
-FINAL_COOLDOWN = 0.5          # минимальное время между финалами
+SILENCE_THRESHOLD = 0.4       # секунд тишины = фраза закончена
+FINAL_COOLDOWN = 0.2          # минимальное время между финалами
 SIMILARITY_THRESHOLD = 0.8    # порог схожести для антиспама (0..1)
 
 # ───────────────────────────────
