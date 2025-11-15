@@ -7,7 +7,10 @@ import Blik from "./pages/blik/blik";
 import Trans from "./pages/trans/trans";
 import Currency from "./pages/currency/cur";
 import Support from "./pages/support/sup";
+<<<<<<< HEAD
 import FloatingChat from './components/FloatingChat';
+=======
+>>>>>>> f6402ca1eca7b6b4e26916fb2653c30799592512
 import Login from "./pages/Login/login";
 import { auth } from './pages/firebase';
 
@@ -81,7 +84,7 @@ function App() {
 
               // Проверка похожести
               if (stringSimilarity(finalCmd, lastCommandRef.current) > SIMILARITY_THRESHOLD &&
-                  now - cooldownRef.current < COMMAND_COOLDOWN) {
+                now - cooldownRef.current < COMMAND_COOLDOWN) {
                 bufferRef.current = "";
                 return;
               }
@@ -194,11 +197,15 @@ function App() {
 
   return (
     <div className="App">
+<<<<<<< HEAD
       <FloatingChat 
         ref={chatRef}
         pendingBobbyMessage={pendingBobbyMessage}
       />
      
+=======
+
+>>>>>>> f6402ca1eca7b6b4e26916fb2653c30799592512
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/blik" element={<Blik />} />
