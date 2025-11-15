@@ -12,6 +12,7 @@ import Login from "./pages/Login/login";
 import { auth } from './pages/firebase';
 import Analitics from "./pages/analitics/anal";
 import Contacts from "./pages/contacts/cont";
+import Stocks from "./pages/stocks/stocks";
 
 
 function ProtectedRoute() {
@@ -219,6 +220,7 @@ function App() {
     else if (cmd.includes("currency")) navigate("/currency");
     else if (cmd.includes("bleak") || cmd.includes("blik")) navigate("/blik");
     else if (cmd.includes("support")) navigate("/support");
+    else if (cmd.includes("stocks")) navigate("/stocks");
     else if (cmd.includes("contacts")) navigate("/contacts");
     else if (cmd.includes("analytics")) navigate("/analytics");
   };
@@ -249,6 +251,7 @@ function App() {
         <Route path="/trans" element={<Trans />} />
         <Route path="/currency" element={<Currency />} />
         <Route path="/support" element={<Support />} />
+        <Route path="/stocks" element={<Stocks />} />
         <Route path="/login" element={<Login />} />
         <Route path="/analytics" element={<Analitics analyzeFile={analyzeFile} onAnalyzeFile={() => setAnalyzeFile(false)} />}/>
         <Route path="/contacts" element={<Contacts sendMoney={sendMoney} onSendMoney={() => setSendMoney(false)} sendMessage={sendMessage} onSendMessage={() => setSendMessage(false)} />}/>
