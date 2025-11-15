@@ -47,15 +47,45 @@ function App() {
 
             console.log("🎤 Recognized:", cmd);
 
+            // ─────────────────────── KEYWORD: JARVIS ───────────────────────
             if (cmd.includes("jarvis")) {
-              console.log("🟦 Keyword detected: JARVIS");
-            } else if (cmd.includes("dashboard") || cmd.includes("back") || cmd.includes("main page")) {
+              console.log("🟦 Keyword detected: JARVIS:", cmd);
+
+              // всё после "jarvis"
+              const cleaned = cmd.split("jarvis")[1]?.trim() || "";
+
+              console.log("🟦 Command after keyword:", cleaned);
+
+              if (cleaned.length > 0) {
+                try {
+                  console.log("🟦 Sending to neural API:", cleaned);
+
+                  fetch("http://localhost:5000/api/neural-action", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ input: cleaned })
+                  })
+                    .then(res => res.json())
+                    .then(data => {
+                      console.log("🟦 Neural response:", data);
+                    })
+                    .catch(err => console.error("🟥 Neural API error:", err));
+                } catch (error) {
+                  console.error("🟥 Fetch exception:", error);
+                }
+              }
+
+              return; // чтобы не переключало страницы
+            }
+
+            // ─────────────────────── НАВИГАЦИЯ ───────────────────────
+            if (cmd.includes("dashboard") || cmd.includes("back") || cmd.includes("main page")) {
               navigate("/");
             } else if (cmd.includes("transactions")) {
               navigate("/trans");
             } else if (cmd.includes("currency")) {
               navigate("/currency");
-            } else if (cmd.includes("bleak")) {
+            } else if (cmd.includes("bleak") || cmd.includes("blik")) {
               navigate("/blik");
             } else if (cmd.includes("support")) {
               navigate("/support");
@@ -105,6 +135,7 @@ function App() {
       }
     };
 
+    // запуск после первого клика
     const clickHandler = () => startAudio();
     document.body.addEventListener("click", clickHandler, { once: true });
 
@@ -118,7 +149,7 @@ function App() {
       if (audioContext) audioContext.close();
       if (micStream) micStream.getTracks().forEach((t) => t.stop());
     };
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="App">
