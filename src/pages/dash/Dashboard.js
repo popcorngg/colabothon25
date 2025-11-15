@@ -241,7 +241,6 @@ export default function Dashboard({ flipCard, onFlipCard }) {
           </li>
         </ul>
       </section>
-<<<<<<< HEAD
 
       {/* Document Analysis Section */}
       <section className="document-section" style={{
@@ -412,8 +411,6 @@ export default function Dashboard({ flipCard, onFlipCard }) {
           </div>
         )}
       </section>
-=======
->>>>>>> a6ad4085c5613b78d9cfa9a419de3e5be9bda3ff
     </div>
   );
 }
