@@ -7,7 +7,6 @@ import Blik from "./pages/blik/blik";
 import Trans from "./pages/trans/trans";
 import Currency from "./pages/currency/cur";
 import Support from "./pages/support/sup";
-import FloatingChats from './components/FloatingChats';
 import Login from "./pages/Login/login";
 import { auth } from './pages/firebase';
 
@@ -32,28 +31,14 @@ function App() {
   const { speak } = useSpeech();
   const chatRef = useRef(null);
 
-  /*
-   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        console.log("✅ User logged in:", user.email);
-        localStorage.setItem('userToken', user.uid);
-        localStorage.setItem('userEmail', user.email);
-        
-        if (location.pathname === '/login') {
-          navigate('/');
-        }
-      } else {
-        console.log("❌ No user");
-        localStorage.removeItem('userToken');
-        localStorage.removeItem('userEmail');
-      }
-    });
+  const bufferRef = useRef("");      // Собираем partial
+  const lastCommandRef = useRef(""); // Последняя отправленная команда
+  const cooldownRef = useRef(0);     // Таймер антиспам
+  const timeoutRef = useRef(null);   // Таймаут паузы
 
-    return () => unsubscribe();
-  }, [navigate, location]);
- 
-  */
+  const SILENCE_DELAY = 800;         // пауза между словами (ms)
+  const COMMAND_COOLDOWN = 1500;     // антиспам (ms)
+  const SIMILARITY_THRESHOLD = 0.8;  // порог похожести
 
   useEffect(() => {
     let ws = null;
@@ -69,7 +54,6 @@ function App() {
       console.log("🎤 Starting audio...");
 
       try {
-        // ─────────────────────── WS ───────────────────────
         ws = new WebSocket("ws://localhost:4269");
         ws.binaryType = "arraybuffer";
 
@@ -81,55 +65,31 @@ function App() {
             const cmd = (data.final || data.partial || "").toLowerCase();
             if (!cmd) return;
 
-            console.log("🎤 Recognized:", cmd);
+            // Добавляем в буфер
+            bufferRef.current = cmd;
 
-            // ─────────────────────── KEYWORD: BOBBY ───────────────────────
-            if (cmd.includes("bobby")) {
-              console.log("🟦 Keyword detected: BOBBY:", cmd);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-              // всё після "bobby"
-              const cleaned = cmd.split("bobby")[1]?.trim() || "";
+            timeoutRef.current = setTimeout(() => {
+              const finalCmd = bufferRef.current.trim();
+              const now = Date.now();
 
-              console.log("🟦 Command after keyword:", cleaned);
+              if (!finalCmd) return;
 
-              if (cleaned.length > 0) {
-                try {
-                  console.log("🟦 Sending to neural API:", cleaned);
-
-                  fetch("http://localhost:5000/api/neural-action", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ input: cleaned })
-                  })
-                    .then(res => res.json())
-                    .then(data => {
-                      console.log("🟦 Neural response:", data);
-                      // Озвучиваем ответ AI на его языке
-                      if (data.result) {
-                        speak(data.result);
-                      }
-                    })
-                    .catch(err => console.error("🟥 Neural API error:", err));
-                } catch (error) {
-                  console.error("🟥 Fetch exception:", error);
-                }
+              // Проверка похожести
+              if (stringSimilarity(finalCmd, lastCommandRef.current) > SIMILARITY_THRESHOLD &&
+                  now - cooldownRef.current < COMMAND_COOLDOWN) {
+                bufferRef.current = "";
+                return;
               }
 
-              return; // чтобы не переключало страницы
-            }
+              lastCommandRef.current = finalCmd;
+              cooldownRef.current = now;
+              bufferRef.current = "";
 
-            // ─────────────────────── НАВИГАЦИЯ ───────────────────────
-            if (cmd.includes("dashboard") || cmd.includes("back") || cmd.includes("main page")) {
-              navigate("/");
-            } else if (cmd.includes("transactions")) {
-              navigate("/trans");
-            } else if (cmd.includes("currency")) {
-              navigate("/currency");
-            } else if (cmd.includes("bleak") || cmd.includes("blik")) {
-              navigate("/blik");
-            } else if (cmd.includes("support")) {
-              navigate("/support");
-            }
+              handleCommand(finalCmd);
+
+            }, SILENCE_DELAY);
 
           } catch (err) {
             console.error("JSON parse error:", err);
@@ -152,7 +112,6 @@ function App() {
           if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
           const float32 = e.inputBuffer.getChannelData(0);
-
           const sum = float32.reduce((acc, v) => acc + Math.abs(v), 0);
           if (sum === 0) return;
 
@@ -180,31 +139,67 @@ function App() {
 
     return () => {
       console.log("🎤 Cleanup voice...");
-
       document.body.removeEventListener("click", clickHandler);
 
       if (ws) ws.close();
       if (processor) processor.disconnect();
       if (audioContext) audioContext.close();
-      if (micStream) micStream.getTracks().forEach((t) => t.stop());
+      if (micStream) micStream.getTracks().forEach(t => t.stop());
     };
   }, []);
 
+  // ────────────── Отправка команд ──────────────
+  const handleCommand = (cmd) => {
+    console.log("🟦 Command ready:", cmd);
+
+    if (cmd.includes("jarvis")) {
+      const cleaned = cmd.split("jarvis")[1]?.trim() || "";
+      if (cleaned) {
+        fetch("http://localhost:5000/api/neural-action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ input: cleaned })
+        })
+          .then(res => res.json())
+          .then(data => {
+            console.log("🟦 Neural response:", data);
+            if (data.result) speak(data.result);
+          })
+          .catch(err => console.error("🟥 Neural API error:", err));
+      }
+      return;
+    }
+
+    if (cmd.includes("dashboard") || cmd.includes("back") || cmd.includes("main page")) navigate("/");
+    else if (cmd.includes("transactions")) navigate("/trans");
+    else if (cmd.includes("currency")) navigate("/currency");
+    else if (cmd.includes("bleak") || cmd.includes("blik")) navigate("/blik");
+    else if (cmd.includes("support")) navigate("/support");
+  };
+
+  // ────────────── Проверка похожести строк ──────────────
+  const stringSimilarity = (a, b) => {
+    if (!a || !b) return 0;
+    let longer = a.length > b.length ? a : b;
+    let shorter = a.length > b.length ? b : a;
+    let same = 0;
+    for (let i = 0; i < shorter.length; i++) {
+      if (shorter[i] === longer[i]) same++;
+    }
+    return same / longer.length;
+  };
+
   return (
     <div className="App">
-      <FloatingChat 
-        ref={chatRef}
-        pendingBobbyMessage={pendingBobbyMessage}
-      />
-
+     
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/blik" element={<Blik />} />
         <Route path="/trans" element={<Trans />} />
         <Route path="/currency" element={<Currency />} />
         <Route path="/support" element={<Support />} />
+        <Route path="/login" element={<Login />} />
       </Routes>
-
     </div>
   );
 }
