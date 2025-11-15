@@ -36,7 +36,7 @@ export default function Dashboard() {
         },
         body: JSON.stringify({
           input: neuralInput,
-          current_page: "dashboard" // Передаем информацию о текущей странице
+          current_page: "dashboard"
         })
       });
 
@@ -44,8 +44,9 @@ export default function Dashboard() {
       const result = data.result || "Нет ответа от нейросети";
       setNeuralResponse(result);
 
-      // Озвучиваем ответ на его языке
+      // Озвучиваем ответ
       speak(result);
+
     } catch (error) {
       console.error("Ошибка вызова API:", error);
       const errorMsg = "Ошибка вызова API";
@@ -60,21 +61,19 @@ export default function Dashboard() {
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
-      // Проверяем тип файла
       const allowedTypes = ['application/pdf', 'text/plain', 'text/html', 'text/markdown'];
       if (!allowedTypes.includes(file.type)) {
         alert('Неподдерживаемый тип файла. Используйте PDF, TXT, HTML или MD');
         return;
       }
 
-      // Проверяем размер (максимум 10 МБ)
       if (file.size > 10 * 1024 * 1024) {
         alert('Файл слишком большой. Максимум 10 МБ');
         return;
       }
 
       setSelectedFile(file);
-      setDocumentAnalysis(""); // Очищаем предыдущий анализ
+      setDocumentAnalysis("");
     }
   };
 
@@ -89,13 +88,12 @@ export default function Dashboard() {
     setDocumentAnalysis("📄 Анализирую документ...");
 
     try {
-      // Создаем FormData для отправки файла
       const formData = new FormData();
       formData.append('file', selectedFile);
 
       const response = await fetch("http://localhost:5000/api/document/analyze", {
         method: "POST",
-        body: formData // Не указываем Content-Type, браузер сам добавит multipart/form-data
+        body: formData
       });
 
       const data = await response.json();
@@ -103,8 +101,6 @@ export default function Dashboard() {
       if (data.success) {
         const analysis = data.analysis.summary;
         setDocumentAnalysis(analysis);
-
-        // Озвучиваем краткую сводку
         speak(analysis);
       } else {
         const errorMsg = `Ошибка: ${data.error}`;
@@ -121,11 +117,9 @@ export default function Dashboard() {
     }
   };
 
-  // Очистка выбранного файла
   const handleClearFile = () => {
     setSelectedFile(null);
     setDocumentAnalysis("");
-    // Очищаем input
     const fileInput = document.getElementById('file-input');
     if (fileInput) fileInput.value = '';
   };
@@ -222,7 +216,7 @@ export default function Dashboard() {
         </ul>
       </section>
 
-      {/* СЕКЦИЯ АНАЛИЗА ДОКУМЕНТОВ */}
+      {/* Document Analysis Section */}
       <section className="document-section" style={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         padding: '24px',
@@ -392,7 +386,7 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* AI ASSISTANT СЕКЦИЯ */}
+      {/* AI Assistant */}
       <section className="neural-section">
         <h2>💬 AI Assistant</h2>
         <input
