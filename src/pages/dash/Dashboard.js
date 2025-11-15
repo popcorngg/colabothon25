@@ -143,6 +143,7 @@ export default function Dashboard() {
         </ul>
       </section>
 
+          
       <section className="neural-section">
         <h2>AI Assistant</h2>
         <input

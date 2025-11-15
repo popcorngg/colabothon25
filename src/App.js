@@ -9,7 +9,7 @@ import Support from "./pages/support/sup";
 import FloatingChat from './components/FloatingChat';
 import Login from "./pages/Login/login";
 import { auth } from './pages/firebase';
-
+import { useSpeech } from './hooks/useSpeech'
 
 function ProtectedRoute() {
   const isAuthenticated = localStorage.getItem('userToken');
