@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, Outlet, useLocation } from "react-router-dom";
+import { useSpeech } from "./hooks/useSpeech";
 
 import Dashboard from "./pages/dash/Dashboard";
 import Blik from "./pages/blik/blik";
@@ -28,6 +29,7 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [voiceStarted, setVoiceStarted] = useState(false);
+  const { speak } = useSpeech();
 
   /*
    useEffect(() => {
