@@ -5,6 +5,18 @@ import os
 import requests
 from dotenv import load_dotenv
 import time
+import base64
+try:
+    import PyPDF2
+except ImportError:
+    # Если PyPDF2 не установлен, пробуем pypdf
+    try:
+        import pypdf as PyPDF2
+    except ImportError:
+        print("[WARNING] PyPDF2 не установлен. Анализ PDF недоступен.")
+        PyPDF2 = None
+
+from io import BytesIO
 
 # Загружаем переменные окружения из .env файла
 load_dotenv()
@@ -108,6 +120,7 @@ def get_app_structure():
    - Provides budget recommendations
    - Helps with financial planning
    - Access to all user's financial data
+   - **NEW**: Can analyze documents (PDFs, contracts, agreements)
 
 5. SETTINGS / PROFILE
    - Account settings
@@ -123,6 +136,7 @@ def get_app_structure():
 - Plan budget
 - Track expenses by category
 - Compare income vs expenses
+- **Analyze financial documents and contracts**
 
 💡 WHAT YOU CAN HELP WITH:
 - "Show me my balance" → provide current balance
@@ -132,8 +146,80 @@ def get_app_structure():
 - "How to check analytics?" → explain Analytics section
 - "Give me budget advice" → analyze data and provide recommendations
 - "What's my biggest expense?" → identify largest spending category
+- **"Analyze this contract" → provide summary of uploaded document**
 """
     return structure
+
+def extract_text_from_pdf(file_content):
+    """Извлекает текст из PDF файла"""
+    try:
+        pdf_file = BytesIO(file_content)
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        
+        text = ""
+        for page_num in range(len(pdf_reader.pages)):
+            page = pdf_reader.pages[page_num]
+            text += page.extract_text() + "\n"
+        
+        return text.strip()
+    except Exception as e:
+        print(f"[ERROR] Ошибка при извлечении текста из PDF: {str(e)}")
+        return None
+
+def analyze_document(file_content, filename, file_type):
+    """Анализирует документ и возвращает краткую сводку"""
+    print(f"[DEBUG] Анализ документа: {filename} ({file_type})")
+    
+    # Извлекаем текст в зависимости от типа файла
+    if file_type == 'application/pdf':
+        document_text = extract_text_from_pdf(file_content)
+    elif file_type.startswith('text/'):
+        document_text = file_content.decode('utf-8', errors='ignore')
+    else:
+        return {"error": "Неподдерживаемый тип файла. Поддерживаются: PDF, TXT"}
+    
+    if not document_text:
+        return {"error": "Не удалось извлечь текст из документа"}
+    
+    # Ограничиваем длину текста (первые 8000 символов для анализа)
+    if len(document_text) > 8000:
+        document_text = document_text[:8000] + "...[документ обрезан]"
+    
+    print(f"[DEBUG] Извлечено {len(document_text)} символов текста")
+    
+    # Формируем промпт для анализа документа
+    analysis_prompt = f"""Analyze this document and provide a brief summary in the user's language.
+
+Document: {filename}
+
+Content:
+{document_text}
+
+Please provide:
+1. **Document Type**: What kind of document is this? (contract, agreement, terms of service, etc.)
+2. **Main Purpose**: What is the main purpose of this document?
+3. **Key Points**: List 3-5 most important points or conditions
+4. **Important Dates**: Any important dates or deadlines mentioned
+5. **Financial Terms**: Any amounts, fees, interest rates, or financial obligations
+6. **Risks/Warnings**: Any important warnings or risks the user should be aware of
+7. **Action Required**: Does the user need to do anything?
+
+Format the response clearly and concisely. If the document is a banking contract, focus on financial terms, obligations, and user rights."""
+    
+    try:
+        # Отправляем запрос к нейросети для анализа
+        result = call_openrouter(analysis_prompt, current_page="document_analysis")
+        
+        return {
+            "filename": filename,
+            "type": file_type,
+            "text_length": len(document_text),
+            "summary": result
+        }
+        
+    except Exception as e:
+        print(f"[ERROR] Ошибка при анализе документа: {str(e)}")
+        return {"error": f"Ошибка при анализе: {str(e)}"}
 
 AVAILABLE_MODEL = get_available_model()
 
@@ -316,6 +402,53 @@ def get_app_info():
     structure = get_app_structure()
     return jsonify({"structure": structure})
 
+@app.route("/api/document/analyze", methods=["POST"])
+def analyze_document_endpoint():
+    """Анализирует загруженный документ (PDF, TXT)"""
+    
+    # Проверяем наличие файла
+    if 'file' not in request.files:
+        return jsonify({"error": "Файл не найден"}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({"error": "Файл не выбран"}), 400
+    
+    # Проверяем тип файла
+    allowed_types = ['application/pdf', 'text/plain', 'text/html', 'text/markdown']
+    if file.content_type not in allowed_types:
+        return jsonify({
+            "error": f"Неподдерживаемый тип файла: {file.content_type}",
+            "supported": "PDF, TXT, HTML, Markdown"
+        }), 400
+    
+    try:
+        # Читаем содержимое файла
+        file_content = file.read()
+        
+        # Проверяем размер файла (максимум 10 МБ)
+        if len(file_content) > 10 * 1024 * 1024:
+            return jsonify({"error": "Файл слишком большой (максимум 10 МБ)"}), 400
+        
+        print(f"[INFO] Получен файл для анализа: {file.filename} ({file.content_type}, {len(file_content)} байт)")
+        
+        # Анализируем документ
+        result = analyze_document(file_content, file.filename, file.content_type)
+        
+        if "error" in result:
+            return jsonify(result), 400
+        
+        return jsonify({
+            "success": True,
+            "analysis": result,
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"[ERROR] Ошибка при обработке файла: {str(e)}")
+        return jsonify({"error": f"Ошибка обработки: {str(e)}"}), 500
+
 
 if __name__ == "__main__":
     print("=" * 50)
@@ -324,5 +457,12 @@ if __name__ == "__main__":
     print(f"✓ Сервер: http://localhost:5000")
     print(f"✓ Модель: {AVAILABLE_MODEL}")
     print(f"✓ API ключ: {'✓ Настроен' if OPENROUTER_API_KEY else '✗ Не настроен (MOCK режим)'}")
+    print(f"✓ Анализ документов: Поддержка PDF, TXT, HTML, MD")
+    print("=" * 50)
+    print("\n📋 Доступные эндпоинты:")
+    print("  POST /api/neural-action - Чат с AI ассистентом")
+    print("  POST /api/document/analyze - Анализ документов")
+    print("  GET  /api/user/data - Данные пользователя")
+    print("  GET  /api/health - Статус сервера")
     print("=" * 50)
     app.run(host="0.0.0.0", port=5000, debug=True)
