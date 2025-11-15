@@ -7,7 +7,7 @@ import Blik from "./pages/blik/blik";
 import Trans from "./pages/trans/trans";
 import Currency from "./pages/currency/cur";
 import Support from "./pages/support/sup";
-import FloatingChats from './components/FloatingChats';
+import FloatingChat from './components/FloatingChat';
 import Login from "./pages/Login/login";
 import { auth } from './pages/firebase';
 
