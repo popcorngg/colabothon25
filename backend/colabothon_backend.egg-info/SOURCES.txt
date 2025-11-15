@@ -1,0 +1,7 @@
+setup.py
+colabothon_backend.egg-info/PKG-INFO
+colabothon_backend.egg-info/SOURCES.txt
+colabothon_backend.egg-info/dependency_links.txt
+colabothon_backend.egg-info/entry_points.txt
+colabothon_backend.egg-info/requires.txt
+colabothon_backend.egg-info/top_level.txt

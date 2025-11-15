@@ -1,0 +1,121 @@
+
+.blik-header {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	margin: 100px auto 24px auto;
+	max-width: 420px;
+}
+
+.blik-title {
+	font-size: 2.2em;
+	font-weight: 800;
+	letter-spacing: 2px;
+	color: #ffd700;
+	margin: 0;
+}
+
+.back-btn {
+	background: none;
+	border: none;
+	color: #fff;
+	font-size: 1.1em;
+	font-weight: 600;
+	padding: 8px 18px;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: background 0.2s;
+	margin-right: 8px;
+}
+.back-btn:hover {
+	background: rgba(255,255,255,0.08);
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+html, body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	background: #0a0a0a;
+	color: white;
+	font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.blik-card {
+	background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
+	color: #1a1a1a;
+	border-radius: 24px;
+	box-shadow: 0 20px 60px rgba(255, 215, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+	padding: 32px;
+	margin: 40px auto 24px auto;
+	max-width: 420px;
+	text-align: center;
+}
+
+.blik-balance {
+	font-size: 1.5em;
+	color: #4f46e5;
+	margin-top: 12px;
+	font-weight: 700;
+}
+
+.blik-code-section {
+	background: rgba(255, 255, 255, 0.03);
+	backdrop-filter: blur(10px);
+	border: 1px solid rgba(255, 255, 255, 0.05);
+	border-radius: 16px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+	padding: 32px;
+	max-width: 420px;
+	margin: 0 auto 32px auto;
+	text-align: center;
+}
+
+.blik-code {
+	font-size: 2.5em;
+	letter-spacing: 0.2em;
+	color: #fff;
+	margin-bottom: 16px;
+	font-weight: 800;
+	text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.blik-actions {
+	display: flex;
+	justify-content: center;
+	gap: 16px;
+	margin-bottom: 16px;
+}
+
+.blik-actions button {
+	background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+	color: #1a1a1a;
+	border: none;
+	border-radius: 12px;
+	padding: 12px 32px;
+	font-size: 1em;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background 0.2s, transform 0.2s;
+	box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
+	letter-spacing: -0.3px;
+}
+.blik-actions button:hover {
+	background: linear-gradient(135deg, #ffed4e 0%, #ffd700 100%);
+	transform: translateY(-2px);
+	box-shadow: 0 12px 32px rgba(255, 215, 0, 0.4);
+}
+.blik-actions button:active {
+	transform: translateY(0);
+}
+
+.blik-timer {
+	font-size: 1.1em;
+	color: #ffd700;
+	font-weight: 600;
+}
+
+.blik-timer span[style*="color: red"] {
+	color: #f87171 !important;
+}
