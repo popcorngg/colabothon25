@@ -68,10 +68,18 @@ export default function Contacs() {
 
       setAiResponse(result);
 
-      // Проверяем, есть ли в ответе команды для выполнения
-      await processAICommands(result, aiInput);
-
-      speak(result);
+      // Проверяем, есть ли команда навигации
+      if (data.action && data.action.type === "navigate") {
+        speak(result);
+        // Даем время прочитать сообщение, затем переходим
+        setTimeout(() => {
+          nav(data.action.route);
+        }, 1500);
+      } else {
+        // Проверяем, есть ли в ответе команды для выполнения
+        await processAICommands(result, aiInput);
+        speak(result);
+      }
     } catch (error) {
       console.error('Error calling AI:', error);
       const errorMsg = 'Error connecting to AI assistant';

@@ -246,6 +246,7 @@ def call_openrouter(prompt, retry_count=0, max_retries=2, current_page=None):
                 "transactions": "TRANSACTIONS PAGE - viewing full transaction history",
                 "analytics": "ANALYTICS PAGE - viewing charts and spending statistics",
                 "document_analysis": "DOCUMENT ANALYSIS PAGE - analyzing uploaded financial documents",
+                "contacts": "CONTACTS PAGE - managing contacts, sending money, and messaging",
                 "settings": "SETTINGS PAGE - managing account preferences",
                 "support": "SUPPORT PAGE - getting help and assistance"
             }
@@ -260,6 +261,28 @@ def call_openrouter(prompt, retry_count=0, max_retries=2, current_page=None):
 You are helping them understand the document's contents, terms, and implications.
 Focus on clear explanations, highlighting important terms, risks, and required actions.
 """
+            
+            # Специальный контекст для страницы контактов
+            elif current_page == "contacts":
+                current_page_info += """
+👥 CONTEXT: User is on the Contacts page managing their contacts.
+You can help them:
+- Send money to contacts (e.g., "Send 100 zł to Anna")
+- Send messages to contacts (e.g., "Message Piotr")
+- Find specific contacts (e.g., "Who did I transfer the most money to?")
+- Manage and organize contacts
+
+When user asks to send money or message someone:
+1. Identify the contact name from their request
+2. Extract the amount if it's a transfer
+3. Confirm the action clearly
+4. The UI will automatically open the appropriate modal
+
+Examples:
+- "Send 50 zł to Maria" → Identify Maria, extract 50, prepare transfer
+- "Write to Jan" → Identify Jan, prepare message form
+- "Show my top contacts" → Analyze and show contacts with most activity
+"""
         
         # УЛУЧШЕННЫЙ системный промпт с информацией о структуре приложения
         system_prompt = f"""You are "FinBot" - an intelligent AI assistant integrated into a banking mobile application. 
@@ -272,6 +295,8 @@ Focus on clear explanations, highlighting important terms, risks, and required a
 
 🎯 YOUR CAPABILITIES:
 1. **Navigation Help**: Guide users through the app's sections and features
+   - When user asks to go somewhere, the system will automatically navigate
+   - Examples: "Open contacts", "Go to analytics", "Show transactions"
 2. **Financial Analysis**: Analyze user's transactions, income, and expenses
 3. **Budget Advice**: Provide personalized financial recommendations
 4. **Feature Explanation**: Explain what each section of the app does
@@ -386,15 +411,151 @@ def neural_action():
     if not user_input:
         return jsonify({"error": "Введите сообщение"}), 400
 
+    # Проверяем команды навигации ПЕРЕД отправкой к AI
+    navigation_result = check_navigation_command(user_input)
+    if navigation_result:
+        return jsonify(navigation_result)
+
     # Получаем ответ от нейросети с учетом текущей страницы
     result = call_openrouter(user_input, current_page=current_page)
     
-    return jsonify({
+    # Проверяем, есть ли в ответе команды навигации
+    navigation_action = extract_navigation_from_response(result)
+    
+    response = {
         "result": result,
         "timestamp": datetime.now().isoformat(),
         "model": AVAILABLE_MODEL,
         "current_page": current_page
-    })
+    }
+    
+    # Добавляем действие навигации если найдено
+    if navigation_action:
+        response["action"] = navigation_action
+    
+    return jsonify(response)
+
+
+def check_navigation_command(user_input):
+    """Проверяет, является ли команда запросом на навигацию"""
+    lower_input = user_input.lower()
+    
+    # Словарь команд навигации
+    navigation_map = {
+        # Dashboard / Home
+        'dashboard': ['dashboard', 'home', 'главная', 'главную', 'домой', 'дашборд'],
+        
+        # Transactions
+        'transactions': ['transactions', 'transaction', 'история', 'транзакции', 'транзакцию', 'переводы'],
+        
+        # Analytics
+        'analytics': ['analytics', 'статистика', 'аналитика', 'графики', 'charts'],
+        
+        # Contacts
+        'contacts': ['contacts', 'contact', 'контакты', 'контакт'],
+        
+        # Document Analysis
+        'document_analysis': ['documents', 'document', 'документы', 'документ', 'анализ документов', 'document analysis'],
+        
+        # Currency
+        'currency': ['currency', 'exchange', 'валюта', 'обмен', 'курс'],
+        
+        # Transfer
+        'transfer': ['transfer', 'перевод', 'отправить деньги', 'send money'],
+        
+        # Settings
+        'settings': ['settings', 'настройки', 'настройка'],
+        
+        # Support
+        'support': ['support', 'help', 'поддержка', 'помощь'],
+        
+        # Blik
+        'blik': ['blik', 'блик']
+    }
+    
+    # Ключевые фразы для навигации
+    navigation_triggers = [
+        'open', 'открой', 'перейди', 'go to', 'navigate', 'show', 'покажи',
+        'переход', 'иди', 'открыть', 'перейти', 'покажи мне'
+    ]
+    
+    # Проверяем, есть ли триггер навигации
+    has_trigger = any(trigger in lower_input for trigger in navigation_triggers)
+    
+    if has_trigger or any(keyword in lower_input for page_keywords in navigation_map.values() for keyword in page_keywords):
+        # Определяем, какую страницу нужно открыть
+        for page, keywords in navigation_map.items():
+            if any(keyword in lower_input for keyword in keywords):
+                # Генерируем понятный ответ
+                page_names = {
+                    'dashboard': 'Dashboard',
+                    'transactions': 'Transactions',
+                    'analytics': 'Analytics',
+                    'contacts': 'Contacts',
+                    'document_analysis': 'Document Analysis',
+                    'currency': 'Currency Exchange',
+                    'transfer': 'Transfer',
+                    'settings': 'Settings',
+                    'support': 'Support',
+                    'blik': 'BLIK'
+                }
+                
+                page_routes = {
+                    'dashboard': '/',
+                    'transactions': '/trans',
+                    'analytics': '/analytics',
+                    'contacts': '/contacts',
+                    'document_analysis': '/anal',
+                    'currency': '/currency',
+                    'transfer': '/trans',
+                    'settings': '/settings',
+                    'support': '/support',
+                    'blik': '/blik'
+                }
+                
+                return {
+                    "result": f"✅ Opening {page_names.get(page, page)} page...",
+                    "action": {
+                        "type": "navigate",
+                        "page": page,
+                        "route": page_routes.get(page, '/')
+                    },
+                    "timestamp": datetime.now().isoformat()
+                }
+    
+    return None
+
+
+def extract_navigation_from_response(ai_response):
+    """Извлекает команды навигации из ответа AI"""
+    lower_response = ai_response.lower()
+    
+    # Паттерны которые AI может использовать
+    navigation_patterns = {
+        'contacts': ['go to contacts', 'open contacts', 'contacts page', 'navigate to contacts'],
+        'transactions': ['go to transactions', 'open transactions', 'transaction history'],
+        'analytics': ['go to analytics', 'open analytics', 'view analytics'],
+        'document_analysis': ['go to documents', 'open documents', 'document analysis'],
+        'dashboard': ['go to dashboard', 'go home', 'return to home']
+    }
+    
+    for page, patterns in navigation_patterns.items():
+        if any(pattern in lower_response for pattern in patterns):
+            page_routes = {
+                'dashboard': '/',
+                'transactions': '/trans',
+                'analytics': '/analytics',
+                'contacts': '/contacts',
+                'document_analysis': '/anal'
+            }
+            
+            return {
+                "type": "navigate",
+                "page": page,
+                "route": page_routes.get(page, '/')
+            }
+    
+    return None
 
 
 @app.route("/api/health", methods=["GET"])
