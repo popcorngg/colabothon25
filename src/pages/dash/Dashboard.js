@@ -28,6 +28,8 @@ export default function Dashboard({ flipCard, onFlipCard }) {
   const handleSup = () => nav('/support');
   const handleCur = () => nav('/currency');
   const handleTrans = () => nav('/trans');
+  const handleAnal = () => nav('/analitics');
+  const handleCont = () => nav('/contacs');
 
   const handleNeuralAction = async () => {
     if (!neuralInput.trim()) return;
@@ -137,6 +139,23 @@ export default function Dashboard({ flipCard, onFlipCard }) {
         <img src={logo} alt="Bank Logo" className="logo-image" />
       </div>
 
+      <div className='upper-interface'>
+        {/* Document Analysis Button */}
+        <button className="analysisBtn" onClick={handleAnal}>
+          <span className="btn-icon">📄</span>
+          <span className="btn-text">Document Analyst</span>
+          <span className="btn-arrow">→</span>
+        </button>
+
+        {/* Contacts page */}
+        <button className="contactsBtn" onClick={handleCont}>
+          <span className="btn-icon">👥</span>
+          <span className="btn-text">Contacts</span>
+          <span className="btn-arrow">→</span>
+        </button>
+      </div>
+
+
       <div className="balanceCard" onClick={() => setIsFlipped(!isFlipped)}>
         <div className={`card-inner ${isFlipped ? 'flipped' : ''}`}>
           {/* FRONT */}
@@ -222,6 +241,7 @@ export default function Dashboard({ flipCard, onFlipCard }) {
           </li>
         </ul>
       </section>
+<<<<<<< HEAD
 
       {/* Document Analysis Section */}
       <section className="document-section" style={{
@@ -392,6 +412,8 @@ export default function Dashboard({ flipCard, onFlipCard }) {
           </div>
         )}
       </section>
+=======
+>>>>>>> a6ad4085c5613b78d9cfa9a419de3e5be9bda3ff
     </div>
   );
 }

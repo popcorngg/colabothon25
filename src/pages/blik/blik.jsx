@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import "./blik.css";
 import logo from '../dash/logo.png';
 export default function Blik() {
-    const nav = useNavigate();
+  const nav = useNavigate();
   const [balance, setBalance] = useState(1250.50); // Example balance
   const [blikCode, setBlikCode] = useState(generateBlikCode());
   const [timeLeft, setTimeLeft] = useState(120);
