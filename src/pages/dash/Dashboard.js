@@ -12,6 +12,11 @@ export default function Dashboard() {
   const [neuralResponse, setNeuralResponse] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Новые состояния для работы с документами
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [documentAnalysis, setDocumentAnalysis] = useState("");
+  const [uploadLoading, setUploadLoading] = useState(false);
+
   const handleBlick = () => nav('/blik');
   const handleSup = () => nav('/support');
   const handleCur = () => nav('/currency');
@@ -29,16 +34,18 @@ export default function Dashboard() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ input: neuralInput })
+        body: JSON.stringify({
+          input: neuralInput,
+          current_page: "dashboard" // Передаем информацию о текущей странице
+        })
       });
 
       const data = await response.json();
       const result = data.result || "Нет ответа от нейросети";
       setNeuralResponse(result);
-      
+
       // Озвучиваем ответ на его языке
       speak(result);
-
     } catch (error) {
       console.error("Ошибка вызова API:", error);
       const errorMsg = "Ошибка вызова API";
@@ -47,6 +54,80 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Обработка выбора файла
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Проверяем тип файла
+      const allowedTypes = ['application/pdf', 'text/plain', 'text/html', 'text/markdown'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Неподдерживаемый тип файла. Используйте PDF, TXT, HTML или MD');
+        return;
+      }
+
+      // Проверяем размер (максимум 10 МБ)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Файл слишком большой. Максимум 10 МБ');
+        return;
+      }
+
+      setSelectedFile(file);
+      setDocumentAnalysis(""); // Очищаем предыдущий анализ
+    }
+  };
+
+  // Отправка файла на анализ
+  const handleDocumentAnalysis = async () => {
+    if (!selectedFile) {
+      alert('Выберите файл для анализа');
+      return;
+    }
+
+    setUploadLoading(true);
+    setDocumentAnalysis("📄 Анализирую документ...");
+
+    try {
+      // Создаем FormData для отправки файла
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const response = await fetch("http://localhost:5000/api/document/analyze", {
+        method: "POST",
+        body: formData // Не указываем Content-Type, браузер сам добавит multipart/form-data
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const analysis = data.analysis.summary;
+        setDocumentAnalysis(analysis);
+
+        // Озвучиваем краткую сводку
+        speak(analysis);
+      } else {
+        const errorMsg = `Ошибка: ${data.error}`;
+        setDocumentAnalysis(errorMsg);
+        speak(errorMsg);
+      }
+    } catch (error) {
+      console.error("Ошибка анализа документа:", error);
+      const errorMsg = `Ошибка анализа: ${error.message}`;
+      setDocumentAnalysis(errorMsg);
+      speak(errorMsg);
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  // Очистка выбранного файла
+  const handleClearFile = () => {
+    setSelectedFile(null);
+    setDocumentAnalysis("");
+    // Очищаем input
+    const fileInput = document.getElementById('file-input');
+    if (fileInput) fileInput.value = '';
   };
 
   return (
@@ -88,7 +169,6 @@ export default function Dashboard() {
                 6749 9153 2591 1234
               </div>
             </div>
-
             <div className="balanceCard-info">
               <div>
                 <div style={{ fontSize: '12px', opacity: '0.7', marginBottom: '4px' }}>Valid Thru</div>
@@ -99,7 +179,6 @@ export default function Dashboard() {
                 <div style={{ fontSize: '16px', fontWeight: '600' }}>228</div>
               </div>
             </div>
-
             <div style={{
               marginTop: '32px',
               fontSize: '12px',
@@ -143,48 +222,82 @@ export default function Dashboard() {
         </ul>
       </section>
 
+
+      {/* AI ASSISTANT СЕКЦИЯ */}
       <section className="neural-section">
-        <h2>AI Assistant</h2>
+        <h2>💬 AI Assistant</h2>
         <input
           type="text"
           value={neuralInput}
           onChange={(e) => setNeuralInput(e.target.value)}
-          placeholder="Введите запрос к нейронке"
+          placeholder="Ask me anything about your finances..."
           disabled={loading}
           onKeyPress={(e) => e.key === 'Enter' && handleNeuralAction()}
         />
         <button onClick={handleNeuralAction} disabled={loading}>
-          {loading ? "Обработка..." : "Отправить"}
+          {loading ? "Processing..." : "Send"}
         </button>
-        <p>Ответ: {neuralResponse}</p>
-        
+
+        {neuralResponse && (
+          <div style={{
+            marginTop: '16px',
+            padding: '16px',
+            background: 'rgba(102, 126, 234, 0.1)',
+            borderRadius: '12px',
+            whiteSpace: 'pre-wrap'
+          }}>
+            <strong>Response:</strong> {neuralResponse}
+          </div>
+        )}
+
         {neuralResponse && neuralResponse !== "...Идет обработка запроса..." && (
           <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
             {!isSpeaking ? (
-              <button 
+              <button
                 onClick={() => speak(neuralResponse)}
-                style={{ background: '#28a745', color: 'white', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                style={{
+                  background: '#28a745',
+                  color: 'white',
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
               >
-                ▶️ Читать ответ
+                ▶️ Read Response
               </button>
             ) : (
               <>
-                <button 
+                <button
                   onClick={stop}
-                  style={{ background: '#dc3545', color: 'white', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                  style={{
+                    background: '#dc3545',
+                    color: 'white',
+                    padding: '8px 16px',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
                 >
-                  ⏹️ Остановить
+                  ⏹️ Stop
                 </button>
-                <button 
+                <button
                   onClick={() => speak(neuralResponse)}
-                  style={{ background: '#ffc107', color: 'black', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                  style={{
+                    background: '#ffc107',
+                    color: 'black',
+                    padding: '8px 16px',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
                 >
-                  🔄 Читать заново
+                  🔄 Restart
                 </button>
               </>
             )}
             <span style={{ alignSelf: 'center', fontSize: '14px', opacity: '0.7' }}>
-              {isSpeaking ? '🔊 Озвучивается...' : ''}
+              {isSpeaking ? '🔊 Speaking...' : ''}
             </span>
           </div>
         )}
