@@ -28,7 +28,7 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [voiceStarted, setVoiceStarted] = useState(false);
-  
+
   /*
    useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -189,18 +189,13 @@ function App() {
       <FloatingChat />
 
       <Routes>
-        {/* public */}
-        <Route path="/login" element={<Login />} />
-
-        {/* protected */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/blik" element={<Blik />} />
-          <Route path="/trans" element={<Trans />} />
-          <Route path="/currency" element={<Currency />} />
-          <Route path="/support" element={<Support />} />
-        </Route>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/blik" element={<Blik />} />
+        <Route path="/trans" element={<Trans />} />
+        <Route path="/currency" element={<Currency />} />
+        <Route path="/support" element={<Support />} />
       </Routes>
+
     </div>
   );
 }
