@@ -141,7 +141,6 @@ function App() {
       }
     };
 
-    // запуск после первого клика
     const clickHandler = () => startAudio();
     document.body.addEventListener("click", clickHandler, { once: true });
 
