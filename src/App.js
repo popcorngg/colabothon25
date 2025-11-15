@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, Outlet, useLocation } from "react-router-dom";
 import { useSpeech } from "./hooks/useSpeech";
 
@@ -29,7 +29,9 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [voiceStarted, setVoiceStarted] = useState(false);
+  const [pendingBobbyMessage, setPendingBobbyMessage] = useState(null);
   const { speak } = useSpeech();
+  const chatRef = useRef(null);
 
   /*
    useEffect(() => {
@@ -82,12 +84,12 @@ function App() {
 
             console.log("🎤 Recognized:", cmd);
 
-            // ─────────────────────── KEYWORD: JARVIS ───────────────────────
-            if (cmd.includes("jarvis")) {
-              console.log("🟦 Keyword detected: JARVIS:", cmd);
+            // ─────────────────────── KEYWORD: BOBBY ───────────────────────
+            if (cmd.includes("bobby")) {
+              console.log("🟦 Keyword detected: BOBBY:", cmd);
 
-              // всё после "jarvis"
-              const cleaned = cmd.split("jarvis")[1]?.trim() || "";
+              // всё після "bobby"
+              const cleaned = cmd.split("bobby")[1]?.trim() || "";
 
               console.log("🟦 Command after keyword:", cleaned);
 
@@ -191,7 +193,10 @@ function App() {
 
   return (
     <div className="App">
-      <FloatingChat />
+      <FloatingChat 
+        ref={chatRef}
+        pendingBobbyMessage={pendingBobbyMessage}
+      />
 
       <Routes>
         <Route path="/" element={<Dashboard />} />
