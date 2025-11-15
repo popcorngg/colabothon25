@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 import requests
 from dotenv import load_dotenv
+import time
 
 # Загружаем переменные окружения из .env файла
 load_dotenv()
@@ -35,14 +36,17 @@ USER_DATA = {
 
 # Получаем список доступных моделей при запуске
 def get_available_model():
-    """Получает модель из OpenRouter"""
-    # Используем Llama 3.1 8B Instant для финансового ассистента
-    #model = "google/gemini-flash-1.5"
+    """Получает модель из OpenRouter с fallback механизмом"""
+    # Список моделей в порядке приоритета (от лучших к резервным)
+    models = [
+        "openai/gpt-4o-mini",  # Самая стабильная, платная но дешевая
+        "google/gemini-flash-1.5",  # Бесплатная, быстрая
+        "mistralai/mistral-7b-instruct:free",
+        "microsoft/phi-3-mini-128k-instruct:free",
+        "qwen/qwen-2-7b-instruct:free"
+    ]
     
-    # Или другие бесплатные альтернативы:
-    model = "mistralai/mistral-7b-instruct:free"
-    # model = "microsoft/phi-3-mini-128k-instruct:free"
-    # model = "qwen/qwen-2-7b-instruct:free"
+    model = models[0]  # По умолчанию первая
     print(f"[INFO] Используем модель: {model} (OpenRouter)")
     return model
 
@@ -70,30 +74,45 @@ def get_financial_context():
 
 AVAILABLE_MODEL = get_available_model()
 
-def call_openrouter(prompt):
+def call_openrouter(prompt, retry_count=0, max_retries=2):
     """Отправляет запрос к OpenRouter API с контекстом финансовых данных"""
     print(f"[DEBUG] Получен запрос: {prompt}")
-    print(f"[DEBUG] Используем модель: {AVAILABLE_MODEL}")
+    print(f"[DEBUG] Используем модель: {AVAILABLE_MODEL} (попытка {retry_count + 1})")
     
     try:
         # Формируем контекст с информацией пользователя
         financial_context = get_financial_context()
         
-        # Системный промпт с инструкциями для нейросети
-        system_prompt = f"""Ты — финансовый ассистент банковского приложения. 
-Твоя задача — анализировать финансы пользователя, давать советы по бюджетированию и отвечать на финансовые вопросы.
+        # УЛУЧШЕННЫЙ системный промпт - более гибкий и естественный
+        system_prompt = f"""You are a smart financial assistant for a banking app named "FinBot". 
 
-Вот информация о финансах текущего пользователя:
+Your main specialization is helping users with finances, but you can also:
+- Answer general questions
+- Help with budget planning
+- Give advice on saving money
+- Explain financial terms
+- Maintain friendly conversations
+- Analyze expenses and income
+
+You have access to the current user's financial data:
 {financial_context}
 
-Отвечай кратко, дружелюбно и по делу. Используй валюту zł. 
-Если пользователь спрашивает что-то не о финансах, вежливо напомни, что ты специализируешься на финансовых вопросах.
-Анализируй данные пользователя и давай полезные рекомендации на основе его расходов и доходов."""
+IMPORTANT RULES:
+1. ALWAYS respond in the SAME LANGUAGE as the user's message (English, Russian, Polish, etc.)
+2. If the question is about user's finances - use their data from the context
+3. If it's a general question - respond as a regular helpful assistant
+4. If unsure about something - honestly admit it
+5. Use currency zł (złoty) when talking about user's finances
+6. Give specific recommendations and examples
+7. Be concise - 2-4 sentences for simple questions, more for complex ones
+8. Detect the language of the user's input and reply in that exact language
+
+Current date: {datetime.now().strftime("%d %B %Y")}"""
         
         # Если API ключ не установлен, используем mock ответ
         if not OPENROUTER_API_KEY:
             print("[DEBUG] API Key не установлен - используем MOCK режим")
-            mock_response = f"[MOCK] Финансовый ассистент: Я проанализировал ваши данные. {financial_context.split('ПОСЛЕДНИЕ')[0]}\n\nЕсли у вас есть настоящий OpenRouter ключ, добавьте его в backend/.env"
+            mock_response = f"[MOCK] Привет! Я FinBot - твой финансовый помощник. Твой баланс: {USER_DATA['balance']} zł. Если у вас есть настоящий OpenRouter ключ, добавьте его в backend/.env для полноценной работы AI."
             return mock_response
         
         # Отправляем запрос к OpenRouter API
@@ -101,6 +120,7 @@ def call_openrouter(prompt):
             "Authorization": f"Bearer {OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
             "HTTP-Referer": "http://localhost:3000",
+            "X-Title": "Financial AI Assistant"
         }
         
         payload = {
@@ -109,8 +129,9 @@ def call_openrouter(prompt):
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt},
             ],
-            "temperature": 0.7,
-            "max_tokens": 500,
+            "temperature": 0.7,  # Баланс между креативностью и точностью
+            "max_tokens": 800,  # Увеличили лимит для более полных ответов
+            "top_p": 0.9,
         }
         
         print(f"[DEBUG] Sending request to OpenRouter...")
@@ -120,40 +141,81 @@ def call_openrouter(prompt):
         
         if response.status_code == 200:
             data = response.json()
-            answer = data.get("choices", [{}])[0].get("message", {}).get("content", "No response")
-            print(f"[DEBUG] Ответ от OpenRouter: {answer[:100]}...")
-            return answer
+            answer = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            
+            if not answer:
+                return "Извините, не удалось получить ответ. Попробуйте переформулировать вопрос."
+            
+            print(f"[DEBUG] Ответ от OpenRouter получен ({len(answer)} символов)")
+            return answer.strip()
+            
+        elif response.status_code == 429:
+            # Rate limit - пробуем повторить с задержкой
+            print(f"[DEBUG] Rate limit (429) - попытка {retry_count + 1}/{max_retries}")
+            if retry_count < max_retries:
+                wait_time = 2 ** retry_count  # Экспоненциальная задержка: 1s, 2s, 4s
+                print(f"[DEBUG] Ожидание {wait_time} секунд...")
+                time.sleep(wait_time)
+                return call_openrouter(prompt, retry_count + 1, max_retries)
+            else:
+                return "⚠️ Сервис временно перегружен. Пожалуйста, попробуйте через минуту или используйте платную модель для стабильной работы."
+                
         elif response.status_code == 401:
             print(f"[DEBUG] OpenRouter 401 - Invalid API Key")
-            return "[ERROR] OpenRouter API Key недействителен. Проверьте ключ на https://openrouter.ai"
+            return "❌ Ошибка авторизации. Проверьте API ключ на https://openrouter.ai/keys"
+            
+        elif response.status_code == 400:
+            error_data = response.json()
+            error_msg = error_data.get("error", {}).get("message", "Unknown error")
+            print(f"[DEBUG] OpenRouter 400 - Bad Request: {error_msg}")
+            return f"❌ Ошибка запроса: {error_msg}"
+            
         else:
-            error_msg = response.text[:200]
+            error_msg = response.text[:300]
             print(f"[DEBUG] OpenRouter Error ({response.status_code}): {error_msg}")
-            return f"Ошибка API ({response.status_code}): {error_msg}"
+            return f"⚠️ Ошибка API ({response.status_code}). Попробуйте позже."
         
     except requests.exceptions.Timeout:
         print(f"[DEBUG] Timeout при обращении к OpenRouter")
-        return "Ошибка: Timeout при обращении к API"
+        return "⚠️ Превышено время ожидания ответа. Попробуйте еще раз."
+        
+    except requests.exceptions.ConnectionError:
+        print(f"[DEBUG] Connection error")
+        return "⚠️ Ошибка подключения к серверу. Проверьте интернет-соединение."
+        
     except Exception as e:
-        print(f"[DEBUG] Ошибка: {str(e)}")
-        return f"Ошибка при обращении к API: {str(e)}"
+        print(f"[DEBUG] Непредвиденная ошибка: {str(e)}")
+        return f"⚠️ Произошла ошибка: {str(e)[:100]}"
 
 
 @app.route("/api/neural-action", methods=["POST"])
 def neural_action():
+    """Обрабатывает запросы к AI ассистенту"""
     body = request.json
-    user_input = body.get("input", "")
+    user_input = body.get("input", "").strip()
 
     if not user_input:
-        return jsonify({"error": "Input required"}), 400
+        return jsonify({"error": "Введите сообщение"}), 400
 
+    # Получаем ответ от нейросети
     result = call_openrouter(user_input)
-    return jsonify({"result": result})
+    
+    return jsonify({
+        "result": result,
+        "timestamp": datetime.now().isoformat(),
+        "model": AVAILABLE_MODEL
+    })
 
 
 @app.route("/api/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok"})
+    """Проверка работоспособности сервера"""
+    return jsonify({
+        "status": "ok",
+        "timestamp": datetime.now().isoformat(),
+        "model": AVAILABLE_MODEL,
+        "api_key_configured": bool(OPENROUTER_API_KEY)
+    })
 
 @app.route("/api/user/data", methods=["GET"])
 def get_user_data():
@@ -168,5 +230,11 @@ def get_user_context():
 
 
 if __name__ == "__main__":
-    print("Backend running: http://localhost:5000")
+    print("=" * 50)
+    print("🚀 Financial AI Assistant Backend")
+    print("=" * 50)
+    print(f"✓ Сервер: http://localhost:5000")
+    print(f"✓ Модель: {AVAILABLE_MODEL}")
+    print(f"✓ API ключ: {'✓ Настроен' if OPENROUTER_API_KEY else '✗ Не настроен (MOCK режим)'}")
+    print("=" * 50)
     app.run(host="0.0.0.0", port=5000, debug=True)
