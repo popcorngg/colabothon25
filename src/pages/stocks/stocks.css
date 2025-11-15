@@ -7,26 +7,6 @@
   font-family: 'Inter', sans-serif;
 }
 
-/* Bank logo */
-.bank-logo {
-  position: fixed;
-  top: 32px;
-  left: 32px;
-  z-index: 100;
-  cursor: pointer;
-}
-
-.logo-image {
-  width: 70px;
-  height: auto;
-  filter: drop-shadow(0 4px 12px rgba(255, 215, 0, 0.3));
-  transition: transform 0.3s ease;
-}
-
-.logo-image:hover {
-  transform: scale(1.05);
-}
-
 .stocks-header {
   max-width: 500px;
   margin: 100px auto 32px auto;
