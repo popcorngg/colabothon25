@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './cont.css';
 import logo from '../dash/logo.png';
 
-export default function Contacs() {
+export default function Contacts() {
   const nav = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 

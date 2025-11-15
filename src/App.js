@@ -11,8 +11,7 @@ import FloatingChat from './components/FloatingChat';
 import Login from "./pages/Login/login";
 import { auth } from './pages/firebase';
 import Analitics from "./pages/analitics/anal";
-import Contacs from "./pages/contacts/cont";
-
+import Contacts from "./pages/contacts/cont";
 
 
 function ProtectedRoute() {
@@ -189,6 +188,8 @@ function App() {
     else if (cmd.includes("currency")) navigate("/currency");
     else if (cmd.includes("bleak") || cmd.includes("blik")) navigate("/blik");
     else if (cmd.includes("support")) navigate("/support");
+    else if (cmd.includes("contacts")) navigate("/contacts");
+    else if (cmd.includes("analytics")) navigate("/analytics");
   };
 
   // ────────────── STRING SIMILARITY CHECK ──────────────
@@ -218,9 +219,8 @@ function App() {
         <Route path="/currency" element={<Currency />} />
         <Route path="/support" element={<Support />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/analitics" element={<Analitics />}/>
-        <Route path="/contacs" element={<Contacs />}/>
-
+        <Route path="/analytics" element={<Analitics />}/>
+        <Route path="/contacts" element={<Contacts />}/>
       </Routes>
     </div>
   );
