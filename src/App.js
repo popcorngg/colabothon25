@@ -34,6 +34,9 @@ function App() {
   const [pendingBobbyMessage, setPendingBobbyMessage] = useState(null);
   const [chatCommand, setChatCommand] = useState(null);
   const [flipCard, setFlipCard] = useState(false);
+  const [sendMoney, setSendMoney] = useState(false);
+  const [sendMessage, setSendMessage] = useState(false);
+  const [analyzeFile, setAnalyzeFile] = useState(false);
   const { speak } = useSpeech();
   const chatRef = useRef(null);
 
@@ -183,6 +186,34 @@ function App() {
       return;
     }
 
+    // Send money command
+    if (cmd.includes("send") && cmd.includes("money")) {
+      setSendMoney(true);
+      navigate("/contacts");
+      return;
+    }
+
+    // Send message command
+    if (cmd.includes("message")) {
+      setSendMessage(true);
+      navigate("/contacts");
+      return;
+    }
+
+    // Analyze file command
+    if (cmd.includes("analyze") || cmd.includes("analysis")) {
+      setAnalyzeFile(true);
+      navigate("/analytics");
+      // Trigger file picker immediately within voice handler context
+      setTimeout(() => {
+        const fileInput = document.getElementById('file-input');
+        if (fileInput) {
+          fileInput.click();
+        }
+      }, 500);
+      return;
+    }
+
     if (cmd.includes("dashboard") || cmd.includes("back") || cmd.includes("main page")) navigate("/");
     else if (cmd.includes("transactions")) navigate("/trans");
     else if (cmd.includes("currency")) navigate("/currency");
@@ -219,8 +250,8 @@ function App() {
         <Route path="/currency" element={<Currency />} />
         <Route path="/support" element={<Support />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/analytics" element={<Analitics />}/>
-        <Route path="/contacts" element={<Contacts />}/>
+        <Route path="/analytics" element={<Analitics analyzeFile={analyzeFile} onAnalyzeFile={() => setAnalyzeFile(false)} />}/>
+        <Route path="/contacts" element={<Contacts sendMoney={sendMoney} onSendMoney={() => setSendMoney(false)} sendMessage={sendMessage} onSendMessage={() => setSendMessage(false)} />}/>
       </Routes>
     </div>
   );

@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './cont.css';
 import logo from '../dash/logo.png';
 
-export default function Contacts() {
+export default function Contacts({ sendMessage, onSendMessage, sendMoney, onSendMoney }) {
   const nav = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [showAI, setShowAI] = useState(false);
@@ -26,6 +26,7 @@ export default function Contacts() {
   const [selectedContact, setSelectedContact] = useState(null);
   const [transferAmount, setTransferAmount] = useState('');
   const [message, setMessage] = useState('');
+  const [recipientName, setRecipientName] = useState('');
 
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -42,7 +43,21 @@ export default function Contacts() {
     ];
     return colors[index % colors.length];
   };
+  // Open transfer modal on voice command
+  useEffect(() => {
+    if (sendMoney) {
+      setShowTransferModal(true);
+      onSendMoney();
+    }
+  }, [sendMoney]);
 
+  // Open message modal on voice command
+  useEffect(() => {
+    if (sendMessage) {
+      setShowMessageModal(true);
+      onSendMessage();
+    }
+  }, [sendMessage]);
   // AI функционал
   const handleAIRequest = async () => {
     if (!aiInput.trim()) return;
@@ -143,48 +158,56 @@ export default function Contacts() {
 
   // Выполнение перевода
   const handleTransfer = () => {
-    if (!transferAmount || !selectedContact) return;
+    const contactToTransfer = selectedContact || 
+      contacts.find(c => c.name.toLowerCase() === recipientName.toLowerCase());
+    
+    if (!transferAmount || !contactToTransfer) {
+      alert('⚠️ Please enter amount and select/enter recipient name');
+      return;
+    }
 
-    alert(`✅ Successfully transferred ${transferAmount} zł to ${selectedContact.name}!`);
+    alert(`✅ Successfully transferred ${transferAmount} zł to ${contactToTransfer.name}!`);
 
     // Обновляем последний перевод
-    setContacts(prev => prev.map(c =>
-      c.id === selectedContact.id
-        ? { ...c, lastTransfer: `${transferAmount} zł`, date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }
-        : c
-    ));
+    if (selectedContact) {
+      setContacts(prev => prev.map(c =>
+        c.id === selectedContact.id
+          ? { ...c, lastTransfer: `${transferAmount} zł`, date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }
+          : c
+      ));
+    }
 
     setShowTransferModal(false);
     setTransferAmount('');
+    setRecipientName('');
     setSelectedContact(null);
   };
 
   // Отправка сообщения
   const handleSendMessage = () => {
-    if (!message || !selectedContact) return;
+    const contactToMessage = selectedContact || 
+      contacts.find(c => c.name.toLowerCase() === recipientName.toLowerCase());
+    
+    if (!message || !contactToMessage) {
+      alert('⚠️ Please enter message and select/enter recipient name');
+      return;
+    }
 
-    alert(`✅ Message sent to ${selectedContact.name}!\n\n"${message}"`);
+    alert(`✅ Message sent to ${contactToMessage.name}!\n\n"${message}"`);
 
     setShowMessageModal(false);
     setMessage('');
+    setRecipientName('');
     setSelectedContact(null);
   };
 
-  // Озвучивание
+  // Speech synthesis (English only)
   const speak = (text) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
-
-      if (text.match(/[а-яА-ЯЁё]/)) {
-        utterance.lang = 'ru-RU';
-      } else if (text.match(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/)) {
-        utterance.lang = 'pl-PL';
-      } else {
-        utterance.lang = 'en-US';
-      }
-
+      utterance.lang = 'en-US';
       utterance.rate = 0.9;
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
@@ -338,32 +361,56 @@ export default function Contacts() {
       </div>
 
       {/* Transfer Modal */}
-      {showTransferModal && selectedContact && (
-        <div className="modal-overlay" onClick={() => setShowTransferModal(false)}>
+      {showTransferModal && (
+        <div className="modal-overlay" onClick={() => {
+          setShowTransferModal(false);
+          setRecipientName('');
+          setTransferAmount('');
+          setSelectedContact(null);
+        }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3 className="modal-title">💸 Send Money</h3>
-            <div className="modal-contact-info">
-              <div className={`contact-avatar-modal ${getAvatarColor(contacts.indexOf(selectedContact))}`}>
-                {selectedContact.avatar}
+            
+            {selectedContact ? (
+              <div className="modal-contact-info">
+                <div className={`contact-avatar-modal ${getAvatarColor(contacts.indexOf(selectedContact))}`}>
+                  {selectedContact.avatar}
+                </div>
+                <div>
+                  <div className="modal-contact-name">{selectedContact.name}</div>
+                  <div className="modal-contact-phone">{selectedContact.phone}</div>
+                </div>
               </div>
-              <div>
-                <div className="modal-contact-name">{selectedContact.name}</div>
-                <div className="modal-contact-phone">{selectedContact.phone}</div>
-              </div>
-            </div>
+            ) : (
+              <input
+                type="text"
+                value={recipientName}
+                onChange={(e) => setRecipientName(e.target.value)}
+                placeholder="Recipient name..."
+                className="modal-input"
+                autoFocus
+                list="contacts-list-data"
+              />
+            )}
+            
             <input
               type="number"
               value={transferAmount}
               onChange={(e) => setTransferAmount(e.target.value)}
               placeholder="Amount (zł)"
               className="modal-input"
-              autoFocus
             />
+            
             <div className="modal-buttons">
               <button onClick={handleTransfer} className="modal-btn primary">
                 Send {transferAmount ? `${transferAmount} zł` : ''}
               </button>
-              <button onClick={() => setShowTransferModal(false)} className="modal-btn secondary">
+              <button onClick={() => {
+                setShowTransferModal(false);
+                setRecipientName('');
+                setTransferAmount('');
+                setSelectedContact(null);
+              }} className="modal-btn secondary">
                 Cancel
               </button>
             </div>
@@ -372,32 +419,55 @@ export default function Contacts() {
       )}
 
       {/* Message Modal */}
-      {showMessageModal && selectedContact && (
-        <div className="modal-overlay" onClick={() => setShowMessageModal(false)}>
+      {showMessageModal && (
+        <div className="modal-overlay" onClick={() => {
+          setShowMessageModal(false);
+          setRecipientName('');
+          setMessage('');
+          setSelectedContact(null);
+        }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3 className="modal-title">💬 Send Message</h3>
-            <div className="modal-contact-info">
-              <div className={`contact-avatar-modal ${getAvatarColor(contacts.indexOf(selectedContact))}`}>
-                {selectedContact.avatar}
+            
+            {selectedContact ? (
+              <div className="modal-contact-info">
+                <div className={`contact-avatar-modal ${getAvatarColor(contacts.indexOf(selectedContact))}`}>
+                  {selectedContact.avatar}
+                </div>
+                <div>
+                  <div className="modal-contact-name">{selectedContact.name}</div>
+                  <div className="modal-contact-phone">{selectedContact.phone}</div>
+                </div>
               </div>
-              <div>
-                <div className="modal-contact-name">{selectedContact.name}</div>
-                <div className="modal-contact-phone">{selectedContact.phone}</div>
-              </div>
-            </div>
+            ) : (
+              <input
+                type="text"
+                value={recipientName}
+                onChange={(e) => setRecipientName(e.target.value)}
+                placeholder="Recipient name..."
+                className="modal-input"
+                autoFocus
+                list="contacts-list-data"
+              />
+            )}
+            
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Type your message..."
               className="modal-textarea"
               rows="4"
-              autoFocus
             />
             <div className="modal-buttons">
               <button onClick={handleSendMessage} className="modal-btn primary">
                 Send Message
               </button>
-              <button onClick={() => setShowMessageModal(false)} className="modal-btn secondary">
+              <button onClick={() => {
+                setShowMessageModal(false);
+                setRecipientName('');
+                setMessage('');
+                setSelectedContact(null);
+              }} className="modal-btn secondary">
                 Cancel
               </button>
             </div>
