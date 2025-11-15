@@ -34,17 +34,18 @@ function App() {
   const [voiceStarted, setVoiceStarted] = useState(false);
   const [pendingBobbyMessage, setPendingBobbyMessage] = useState(null);
   const [chatCommand, setChatCommand] = useState(null);
+  const [flipCard, setFlipCard] = useState(false);
   const { speak } = useSpeech();
   const chatRef = useRef(null);
 
-  const bufferRef = useRef("");      // Собираем partial
-  const lastCommandRef = useRef(""); // Последняя отправленная команда
-  const cooldownRef = useRef(0);     // Таймер антиспам
-  const timeoutRef = useRef(null);   // Таймаут паузы
+  const bufferRef = useRef("");     
+  const lastCommandRef = useRef(""); 
+  const cooldownRef = useRef(0);     
+  const timeoutRef = useRef(null);   
 
-  const SILENCE_DELAY = 800;         // пауза между словами (ms)
-  const COMMAND_COOLDOWN = 1500;     // антиспам (ms)
-  const SIMILARITY_THRESHOLD = 0.8;  // порог похожести
+  const SILENCE_DELAY = 800;         
+  const COMMAND_COOLDOWN = 1500;     
+  const SIMILARITY_THRESHOLD = 0.8;  
 
   useEffect(() => {
     let ws = null;
@@ -63,7 +64,7 @@ function App() {
         ws = new WebSocket("ws://localhost:4269");
         ws.binaryType = "arraybuffer";
 
-        ws.onopen = () => console.log("🎤 WS connected");
+        ws.onopen = () => console.log("🎤 WebSocket connected");
 
         ws.onmessage = (ev) => {
           try {
@@ -71,7 +72,7 @@ function App() {
             const cmd = (data.final || data.partial || "").toLowerCase();
             if (!cmd) return;
 
-            // Добавляем в буфер
+            // Add to buffer
             bufferRef.current = cmd;
 
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -82,7 +83,7 @@ function App() {
 
               if (!finalCmd) return;
 
-              // Проверка похожести
+              // Check similarity
               if (stringSimilarity(finalCmd, lastCommandRef.current) > SIMILARITY_THRESHOLD &&
                 now - cooldownRef.current < COMMAND_COOLDOWN) {
                 bufferRef.current = "";
@@ -102,8 +103,8 @@ function App() {
           }
         };
 
-        ws.onerror = (err) => console.error("🎤 WS error:", err);
-        ws.onclose = () => console.log("🎤 WS closed");
+        ws.onerror = (err) => console.error("🎤 WebSocket error:", err);
+        ws.onclose = () => console.log("🎤 WebSocket closed");
 
         // ─────────────────────── AUDIO ───────────────────────
         audioContext = new AudioContext({ sampleRate: 16000 });
@@ -136,7 +137,7 @@ function App() {
         console.log("🎤 Audio pipeline ready");
 
       } catch (err) {
-        console.error("🎤 Audio setup error:", err);
+        console.error("🎤 Audio initialization error:", err);
       }
     };
 
@@ -144,7 +145,7 @@ function App() {
     document.body.addEventListener("click", clickHandler, { once: true });
 
     return () => {
-      console.log("🎤 Cleanup voice...");
+      console.log("🎤 Cleaning up voice...");
       document.body.removeEventListener("click", clickHandler);
 
       if (ws) ws.close();
@@ -154,9 +155,9 @@ function App() {
     };
   }, []);
 
-  // ────────────── Отправка команд ──────────────
+  // ────────────── COMMAND HANDLING ──────────────
   const handleCommand = (cmd) => {
-    console.log("🟦 Command ready:", cmd);
+    console.log("🟦 Command detected:", cmd);
 
     if (cmd.includes("bobby")) {
       const cleaned = cmd.split("bobby")[1]?.trim() || "";
@@ -177,6 +178,12 @@ function App() {
       return;
     }
 
+    // Card flip command
+    if (cmd.includes("flip")) {
+      setFlipCard(prev => !prev);
+      return;
+    }
+
     if (cmd.includes("dashboard") || cmd.includes("back") || cmd.includes("main page")) navigate("/");
     else if (cmd.includes("transactions")) navigate("/trans");
     else if (cmd.includes("currency")) navigate("/currency");
@@ -184,7 +191,7 @@ function App() {
     else if (cmd.includes("support")) navigate("/support");
   };
 
-  // ────────────── Проверка похожести строк ──────────────
+  // ────────────── STRING SIMILARITY CHECK ──────────────
   const stringSimilarity = (a, b) => {
     if (!a || !b) return 0;
     let longer = a.length > b.length ? a : b;
@@ -205,7 +212,7 @@ function App() {
         onChatCommand={() => setChatCommand(null)}
       />
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Dashboard flipCard={flipCard} onFlipCard={() => setFlipCard(prev => !prev)} />} />
         <Route path="/blik" element={<Blik />} />
         <Route path="/trans" element={<Trans />} />
         <Route path="/currency" element={<Currency />} />

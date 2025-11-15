@@ -4,7 +4,7 @@ import logo from './logo.png';
 import { useNavigate } from 'react-router-dom';
 import { useSpeech } from '../../hooks/useSpeech';
 
-export default function Dashboard() {
+export default function Dashboard({ flipCard, onFlipCard }) {
   const nav = useNavigate();
   const { speak, stop, isSpeaking } = useSpeech();
   const [isFlipped, setIsFlipped] = useState(false);
@@ -12,10 +12,17 @@ export default function Dashboard() {
   const [neuralResponse, setNeuralResponse] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Новые состояния для работы с документами
+  // States for document handling
   const [selectedFile, setSelectedFile] = useState(null);
   const [documentAnalysis, setDocumentAnalysis] = useState("");
   const [uploadLoading, setUploadLoading] = useState(false);
+
+  // Sync voice flip command with card state
+  useEffect(() => {
+    if (flipCard !== undefined) {
+      setIsFlipped(flipCard);
+    }
+  }, [flipCard]);
 
   const handleBlick = () => nav('/blik');
   const handleSup = () => nav('/support');
@@ -28,7 +35,7 @@ export default function Dashboard() {
     if (!neuralInput.trim()) return;
 
     setLoading(true);
-    setNeuralResponse("...Идет обработка запроса...");
+    setNeuralResponse("...Processing request...");
 
     try {
       const response = await fetch("http://localhost:5000/api/neural-action", {
@@ -43,15 +50,15 @@ export default function Dashboard() {
       });
 
       const data = await response.json();
-      const result = data.result || "Нет ответа от нейросети";
+      const result = data.result || "No response from AI";
       setNeuralResponse(result);
 
-      // Озвучиваем ответ
+      // Speak the response
       speak(result);
 
     } catch (error) {
-      console.error("Ошибка вызова API:", error);
-      const errorMsg = "Ошибка вызова API";
+      console.error("API call error:", error);
+      const errorMsg = "API call error";
       setNeuralResponse(errorMsg);
       speak(errorMsg);
     } finally {
@@ -59,18 +66,18 @@ export default function Dashboard() {
     }
   };
 
-  // Обработка выбора файла
+  // Handle file selection
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
       const allowedTypes = ['application/pdf', 'text/plain', 'text/html', 'text/markdown'];
       if (!allowedTypes.includes(file.type)) {
-        alert('Неподдерживаемый тип файла. Используйте PDF, TXT, HTML или MD');
+        alert('Unsupported file type. Use PDF, TXT, HTML or MD');
         return;
       }
 
       if (file.size > 10 * 1024 * 1024) {
-        alert('Файл слишком большой. Максимум 10 МБ');
+        alert('File too large. Maximum 10 MB');
         return;
       }
 
@@ -79,15 +86,15 @@ export default function Dashboard() {
     }
   };
 
-  // Отправка файла на анализ
+  // Send file for analysis
   const handleDocumentAnalysis = async () => {
     if (!selectedFile) {
-      alert('Выберите файл для анализа');
+      alert('Select a file to analyze');
       return;
     }
 
     setUploadLoading(true);
-    setDocumentAnalysis("📄 Анализирую документ...");
+    setDocumentAnalysis("📄 Analyzing document...");
 
     try {
       const formData = new FormData();
@@ -105,13 +112,13 @@ export default function Dashboard() {
         setDocumentAnalysis(analysis);
         speak(analysis);
       } else {
-        const errorMsg = `Ошибка: ${data.error}`;
+        const errorMsg = `Error: ${data.error}`;
         setDocumentAnalysis(errorMsg);
         speak(errorMsg);
       }
     } catch (error) {
-      console.error("Ошибка анализа документа:", error);
-      const errorMsg = `Ошибка анализа: ${error.message}`;
+      console.error("Document analysis error:", error);
+      const errorMsg = `Analysis error: ${error.message}`;
       setDocumentAnalysis(errorMsg);
       speak(errorMsg);
     } finally {
@@ -234,6 +241,179 @@ export default function Dashboard() {
           </li>
         </ul>
       </section>
+<<<<<<< HEAD
+
+      {/* Document Analysis Section */}
+      <section className="document-section" style={{
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        padding: '24px',
+        borderRadius: '16px',
+        marginTop: '20px',
+        color: 'white'
+      }}>
+        <h2 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          📄 Document Analysis
+        </h2>
+
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          padding: '16px',
+          borderRadius: '12px',
+          marginBottom: '16px'
+        }}>
+          <label htmlFor="file-input" style={{
+            display: 'block',
+            cursor: 'pointer',
+            padding: '16px',
+            background: 'rgba(255, 255, 255, 0.2)',
+            borderRadius: '8px',
+            textAlign: 'center',
+            border: '2px dashed rgba(255, 255, 255, 0.5)',
+            transition: 'all 0.3s'
+          }}>
+            {selectedFile ? (
+              <div>
+                <div style={{ fontSize: '18px', marginBottom: '8px' }}>📎</div>
+                <div style={{ fontWeight: '600' }}>{selectedFile.name}</div>
+                <div style={{ fontSize: '12px', opacity: '0.7', marginTop: '4px' }}>
+                  {(selectedFile.size / 1024).toFixed(2)} KB
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>📤</div>
+                <div>Click to upload document</div>
+                <div style={{ fontSize: '12px', opacity: '0.7', marginTop: '8px' }}>
+                  PDF, TXT, HTML, MD (max 10 MB)
+                </div>
+              </div>
+            )}
+          </label>
+
+          <input
+            id="file-input"
+            type="file"
+            accept=".pdf,.txt,.html,.md"
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+          <button
+            onClick={handleDocumentAnalysis}
+            disabled={!selectedFile || uploadLoading}
+            style={{
+              flex: 1,
+              padding: '12px',
+              background: selectedFile && !uploadLoading ? '#28a745' : 'rgba(255, 255, 255, 0.3)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: selectedFile && !uploadLoading ? 'pointer' : 'not-allowed',
+              fontWeight: '600',
+              fontSize: '14px',
+              transition: 'all 0.3s'
+            }}
+          >
+            {uploadLoading ? '⏳ Analyzing...' : '🔍 Analyze Document'}
+          </button>
+
+          {selectedFile && (
+            <button
+              onClick={handleClearFile}
+              disabled={uploadLoading}
+              style={{
+                padding: '12px 20px',
+                background: 'rgba(220, 53, 69, 0.8)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                fontSize: '14px'
+              }}
+            >
+              🗑️
+            </button>
+          )}
+        </div>
+
+        {documentAnalysis && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.15)',
+            padding: '16px',
+            borderRadius: '12px',
+            whiteSpace: 'pre-wrap',
+            fontSize: '14px',
+            lineHeight: '1.6',
+            maxHeight: '300px',
+            overflowY: 'auto'
+          }}>
+            {documentAnalysis}
+          </div>
+        )}
+
+        {documentAnalysis && documentAnalysis !== "📄 Analyzing document..." && (
+          <div style={{ marginTop: '12px', display: 'flex', gap: '10px' }}>
+            {!isSpeaking ? (
+              <button
+                onClick={() => speak(documentAnalysis)}
+                style={{
+                  background: '#28a745',
+                  color: 'white',
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}
+              >
+                ▶️ Read Analysis
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={stop}
+                  style={{
+                    background: '#dc3545',
+                    color: 'white',
+                    padding: '8px 16px',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600'
+                  }}
+                >
+                  ⏹️ Stop
+                </button>
+                <button
+                  onClick={() => speak(documentAnalysis)}
+                  style={{
+                    background: '#ffc107',
+                    color: 'black',
+                    padding: '8px 16px',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600'
+                  }}
+                >
+                  🔄 Restart
+                </button>
+              </>
+            )}
+            <span style={{ alignSelf: 'center', fontSize: '14px', opacity: '0.8' }}>
+              {isSpeaking ? '🔊 Speaking...' : ''}
+            </span>
+          </div>
+        )}
+      </section>
+=======
+>>>>>>> a6ad4085c5613b78d9cfa9a419de3e5be9bda3ff
     </div>
   );
 }
