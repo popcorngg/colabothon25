@@ -7,10 +7,7 @@ import Blik from "./pages/blik/blik";
 import Trans from "./pages/trans/trans";
 import Currency from "./pages/currency/cur";
 import Support from "./pages/support/sup";
-<<<<<<< HEAD
 import FloatingChat from './components/FloatingChat';
-=======
->>>>>>> f6402ca1eca7b6b4e26916fb2653c30799592512
 import Login from "./pages/Login/login";
 import { auth } from './pages/firebase';
 
@@ -161,17 +158,7 @@ function App() {
     if (cmd.includes("bobby")) {
       const cleaned = cmd.split("bobby")[1]?.trim() || "";
       if (cleaned) {
-        fetch("http://localhost:5000/api/neural-action", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ input: cleaned })
-        })
-          .then(res => res.json())
-          .then(data => {
-            console.log("🟦 Neural response:", data);
-            if (data.result) speak(data.result);
-          })
-          .catch(err => console.error("🟥 Neural API error:", err));
+        setPendingBobbyMessage(cleaned);
       }
       return;
     }
@@ -197,15 +184,10 @@ function App() {
 
   return (
     <div className="App">
-<<<<<<< HEAD
       <FloatingChat 
         ref={chatRef}
         pendingBobbyMessage={pendingBobbyMessage}
       />
-     
-=======
-
->>>>>>> f6402ca1eca7b6b4e26916fb2653c30799592512
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/blik" element={<Blik />} />

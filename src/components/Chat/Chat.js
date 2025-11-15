@@ -91,7 +91,7 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
     };
   }, [isOpen]);
 
-  const initializeVoiceRecognition = async () => {
+  const initializeVoiceRecognition = useCallback(async () => {
     try {
       wsRef.current = new WebSocket('ws://localhost:4269');
       wsRef.current.binaryType = 'arraybuffer';
@@ -157,7 +157,7 @@ const Chat = forwardRef(({ onBobbyDetected, pendingMessage, shouldOpenChat }, re
     } catch (err) {
       console.error('Voice initialization error:', err);
     }
-  };
+  }, [sendMessage, isOpen, onBobbyDetected]);
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
