@@ -8,6 +8,13 @@ export default function Stocks() {
   const [selectedStock, setSelectedStock] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // AI состояния
+  const [showAI, setShowAI] = useState(false);
+  const [aiInput, setAiInput] = useState('');
+  const [aiResponse, setAiResponse] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
   // Sample stocks data
   const [stocks] = useState([
     {
@@ -119,6 +126,81 @@ export default function Stocks() {
     stock.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // AI функционал
+  const handleAIRequest = async () => {
+    if (!aiInput.trim()) return;
+
+    setLoading(true);
+    setAiResponse('📈 Analyzing market data...');
+
+    try {
+      const response = await fetch('http://localhost:5000/api/neural-action', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          input: aiInput,
+          current_page: 'stocks',
+          stocks: stocks, // Отправляем данные о акциях
+          selected_stock: selectedStock, // Отправляем выбранную акцию если есть
+        }),
+      });
+
+      const data = await response.json();
+      const result = data.result || 'No response from AI';
+
+      setAiResponse(result);
+
+      // Проверяем навигацию
+      if (data.action && data.action.type === "navigate") {
+        speak(result);
+        setTimeout(() => {
+          nav(data.action.route);
+        }, 1500);
+      } else {
+        speak(result);
+      }
+    } catch (error) {
+      console.error('Error calling AI:', error);
+      const errorMsg = 'Error connecting to AI assistant';
+      setAiResponse(errorMsg);
+      speak(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Озвучивание
+  const speak = (text) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+
+      if (text.match(/[а-яА-ЯЁё]/)) {
+        utterance.lang = 'ru-RU';
+      } else if (text.match(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/)) {
+        utterance.lang = 'pl-PL';
+      } else {
+        utterance.lang = 'en-US';
+      }
+
+      utterance.rate = 0.9;
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const stop = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  };
+
   // Find max and min prices for chart scaling
   const getChartDimensions = (data) => {
     const prices = data.map(d => d.price);
@@ -150,7 +232,63 @@ export default function Stocks() {
           ← Back
         </button>
         <h1 className="stocks-title">Stock Market</h1>
+        <button className="ai-toggle-btn" onClick={() => setShowAI(!showAI)}>
+          {showAI ? '✕' : '🤖 AI Analyst'}
+        </button>
       </div>
+
+      {/* AI Assistant Panel */}
+      {showAI && (
+        <div className="ai-panel">
+          <h3 className="ai-panel-title">💹 AI Investment Analyst</h3>
+          <p className="ai-panel-hint">
+            Ask: "Which stock should I buy?", "Analyze AAPL", "Compare TSLA and NVDA", "What's the best performer?"
+          </p>
+          <div className="ai-input-container">
+            <input
+              type="text"
+              value={aiInput}
+              onChange={(e) => setAiInput(e.target.value)}
+              placeholder="Ask for investment advice..."
+              className="ai-input"
+              disabled={loading}
+              onKeyPress={(e) => e.key === 'Enter' && handleAIRequest()}
+            />
+            <button
+              onClick={handleAIRequest}
+              disabled={loading || !aiInput.trim()}
+              className="ai-send-btn"
+            >
+              {loading ? '⏳' : '→'}
+            </button>
+          </div>
+
+          {aiResponse && (
+            <div className="ai-response-box">
+              <div className="ai-response-content">{aiResponse}</div>
+              {aiResponse && aiResponse !== '📈 Analyzing market data...' && (
+                <div className="ai-audio-controls">
+                  {!isSpeaking ? (
+                    <button onClick={() => speak(aiResponse)} className="audio-btn">
+                      ▶️ Read
+                    </button>
+                  ) : (
+                    <>
+                      <button onClick={stop} className="audio-btn stop">
+                        ⏹️ Stop
+                      </button>
+                      <button onClick={() => speak(aiResponse)} className="audio-btn">
+                        🔄 Restart
+                      </button>
+                    </>
+                  )}
+                  {isSpeaking && <span className="speaking-indicator">🔊</span>}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="stocks-container">
         {!selectedStock ? (
@@ -229,7 +367,6 @@ export default function Stocks() {
                 viewBox="0 0 800 400"
                 preserveAspectRatio="xMidYMid meet"
               >
-                {/* Grid lines and labels */}
                 <defs>
                   <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor="rgba(255, 215, 0, 0.3)" />
@@ -237,27 +374,9 @@ export default function Stocks() {
                   </linearGradient>
                 </defs>
 
-                {/* Y-axis */}
-                <line
-                  x1="60"
-                  y1="20"
-                  x2="60"
-                  y2="350"
-                  stroke="#444"
-                  strokeWidth="2"
-                />
+                <line x1="60" y1="20" x2="60" y2="350" stroke="#444" strokeWidth="2" />
+                <line x1="60" y1="350" x2="750" y2="350" stroke="#444" strokeWidth="2" />
 
-                {/* X-axis */}
-                <line
-                  x1="60"
-                  y1="350"
-                  x2="750"
-                  y2="350"
-                  stroke="#444"
-                  strokeWidth="2"
-                />
-
-                {/* Y-axis labels */}
                 {(() => {
                   const { maxPrice, minPrice } = getChartDimensions(selectedStock.data);
                   const labels = [];
@@ -267,31 +386,16 @@ export default function Stocks() {
                     const y = (i / 4) * 330 + 20;
                     labels.push(
                       <g key={`y-label-${i}`}>
-                        <text
-                          x="50"
-                          y={y + 5}
-                          textAnchor="end"
-                          fontSize="12"
-                          fill="#aaa"
-                        >
+                        <text x="50" y={y + 5} textAnchor="end" fontSize="12" fill="#aaa">
                           ${price.toFixed(0)}
                         </text>
-                        <line
-                          x1="60"
-                          y1={y}
-                          x2="750"
-                          y2={y}
-                          stroke="#333"
-                          strokeWidth="1"
-                          strokeDasharray="5,5"
-                        />
+                        <line x1="60" y1={y} x2="750" y2={y} stroke="#333" strokeWidth="1" strokeDasharray="5,5" />
                       </g>
                     );
                   }
                   return labels;
                 })()}
 
-                {/* X-axis labels and data points */}
                 {selectedStock.data.map((point, index) => {
                   const { maxPrice, minPrice } = getChartDimensions(selectedStock.data);
                   const x = 60 + (index / (selectedStock.data.length - 1)) * 690;
@@ -299,31 +403,14 @@ export default function Stocks() {
 
                   return (
                     <g key={`point-${index}`}>
-                      {/* X-axis label */}
-                      <text
-                        x={x}
-                        y="375"
-                        textAnchor="middle"
-                        fontSize="12"
-                        fill="#aaa"
-                      >
+                      <text x={x} y="375" textAnchor="middle" fontSize="12" fill="#aaa">
                         {point.time}
                       </text>
-
-                      {/* Data point circle */}
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r="5"
-                        fill="#ffd700"
-                        stroke="#fff"
-                        strokeWidth="2"
-                      />
+                      <circle cx={x} cy={y} r="5" fill="#ffd700" stroke="#fff" strokeWidth="2" />
                     </g>
                   );
                 })}
 
-                {/* Line connecting points */}
                 {(() => {
                   const { maxPrice, minPrice } = getChartDimensions(selectedStock.data);
                   const points = selectedStock.data
@@ -335,31 +422,10 @@ export default function Stocks() {
                     .join(' ');
 
                   return (
-                    <polyline
-                      points={points}
-                      fill="none"
-                      stroke="#ffd700"
-                      strokeWidth="2"
-                    />
-                  );
-                })()}
-
-                {/* Area under the curve */}
-                {(() => {
-                  const { maxPrice, minPrice } = getChartDimensions(selectedStock.data);
-                  const points = selectedStock.data
-                    .map((point, index) => {
-                      const x = 60 + (index / (selectedStock.data.length - 1)) * 690;
-                      const y = getYPosition(point.price, minPrice, maxPrice, 330) + 20;
-                      return `${x},${y}`;
-                    })
-                    .join(' ');
-
-                  return (
-                    <polygon
-                      points={`60,350 ${points} 750,350`}
-                      fill="url(#chartGradient)"
-                    />
+                    <>
+                      <polyline points={points} fill="none" stroke="#ffd700" strokeWidth="2" />
+                      <polygon points={`60,350 ${points} 750,350`} fill="url(#chartGradient)" />
+                    </>
                   );
                 })()}
               </svg>
