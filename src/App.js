@@ -15,8 +15,7 @@ import Contacts from "./pages/contacts/cont";
 import SignIn from "./pages/auth/SignIn.jsx";
 import SignUp from "./pages/auth/SignUp.jsx";
 import AuthDetails from "./pages/auth/AuthDetails.jsx";
-import "./pages/auth/AuthDetails.css";
-
+import Stocks from "./pages/stocks/stocks";
 function ProtectedRoute() {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,6 +64,9 @@ function App() {
   const [pendingBobbyMessage, setPendingBobbyMessage] = useState(null);
   const [chatCommand, setChatCommand] = useState(null);
   const [flipCard, setFlipCard] = useState(false);
+  const [sendMoney, setSendMoney] = useState(false);
+  const [sendMessage, setSendMessage] = useState(false);
+  const [analyzeFile, setAnalyzeFile] = useState(false);
   const { speak } = useSpeech();
   const chatRef = useRef(null);
 
@@ -206,6 +208,34 @@ function App() {
     if (cmd.includes("flip")) {
       setFlipCard(prev => !prev);
       return;
+     }
+
+    // Send money command
+    if (cmd.includes("send") && cmd.includes("money")) {
+      setSendMoney(true);
+      navigate("/contacts");
+      return;
+    }
+
+    // Send message command
+    if (cmd.includes("message")) {
+      setSendMessage(true);
+      navigate("/contacts");
+      return;
+    }
+
+    // Analyze file command
+    if (cmd.includes("analyze") || cmd.includes("analysis")) {
+      setAnalyzeFile(true);
+      navigate("/analytics");
+      // Trigger file picker immediately within voice handler context
+      setTimeout(() => {
+        const fileInput = document.getElementById('file-input');
+        if (fileInput) {
+          fileInput.click();
+        }
+      }, 500);
+      return;
     }
 
     if (cmd.includes("dashboard") || cmd.includes("back") || cmd.includes("main page")) navigate("/");
@@ -213,7 +243,7 @@ function App() {
     else if (cmd.includes("currency")) navigate("/currency");
     else if (cmd.includes("bleak") || cmd.includes("blik")) navigate("/blik");
     else if (cmd.includes("support")) navigate("/support");
-    else if (cmd.includes("contacts")) navigate("/contacts");
+    else if (cmd.includes("stocks")) navigate("/stocks");    else if (cmd.includes("contacts")) navigate("/contacts");
     else if (cmd.includes("analytics")) navigate("/analytics");
   };
 
