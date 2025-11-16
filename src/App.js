@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, Outlet, useLocation } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
 import { useSpeech } from "./hooks/useSpeech";
 
 import Dashboard from "./pages/dash/Dashboard";
@@ -8,14 +9,44 @@ import Trans from "./pages/trans/trans";
 import Currency from "./pages/currency/cur";
 import Support from "./pages/support/sup";
 import FloatingChat from './components/FloatingChat';
-import Login from "./pages/Login/login";
 import { auth } from './firebase';
 import Analitics from "./pages/analitics/anal";
 import Contacts from "./pages/contacts/cont";
-
+import SignIn from "./pages/auth/SignIn.jsx";
+import SignUp from "./pages/auth/SignUp.jsx";
+import AuthDetails from "./pages/auth/AuthDetails.jsx";
+import "./pages/auth/AuthDetails.css";
 
 function ProtectedRoute() {
-  const isAuthenticated = localStorage.getItem('userToken');
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        background: 'linear-gradient(135deg, #000000 0%, #cfcf04 30%, #a98801 60%, #ffff00 100%)',
+        color: '#FFD700',
+        fontSize: '24px',
+        fontWeight: 'bold'
+      }}>
+        Loading...
+      </div>
+    );
+  }
+
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
@@ -37,14 +68,14 @@ function App() {
   const { speak } = useSpeech();
   const chatRef = useRef(null);
 
-  const bufferRef = useRef("");     
-  const lastCommandRef = useRef(""); 
-  const cooldownRef = useRef(0);     
-  const timeoutRef = useRef(null);   
+  const bufferRef = useRef("");
+  const lastCommandRef = useRef("");
+  const cooldownRef = useRef(0);
+  const timeoutRef = useRef(null);
 
-  const SILENCE_DELAY = 800;         
-  const COMMAND_COOLDOWN = 1500;     
-  const SIMILARITY_THRESHOLD = 0.8;  
+  const SILENCE_DELAY = 800;
+  const COMMAND_COOLDOWN = 1500;
+  const SIMILARITY_THRESHOLD = 0.8;
 
   useEffect(() => {
     let ws = null;
@@ -71,7 +102,6 @@ function App() {
             const cmd = (data.final || data.partial || "").toLowerCase();
             if (!cmd) return;
 
-            // Add to buffer
             bufferRef.current = cmd;
 
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -82,7 +112,6 @@ function App() {
 
               if (!finalCmd) return;
 
-              // Check similarity
               if (stringSimilarity(finalCmd, lastCommandRef.current) > SIMILARITY_THRESHOLD &&
                 now - cooldownRef.current < COMMAND_COOLDOWN) {
                 bufferRef.current = "";
@@ -105,7 +134,6 @@ function App() {
         ws.onerror = (err) => console.error("🎤 WebSocket error:", err);
         ws.onclose = () => console.log("🎤 WebSocket closed");
 
-        // ─────────────────────── AUDIO ───────────────────────
         audioContext = new AudioContext({ sampleRate: 16000 });
         await audioContext.resume();
 
@@ -154,7 +182,6 @@ function App() {
     };
   }, []);
 
-  // ────────────── COMMAND HANDLING ──────────────
   const handleCommand = (cmd) => {
     console.log("🟦 Command detected:", cmd);
 
@@ -166,7 +193,6 @@ function App() {
       return;
     }
 
-    // Chat control commands
     if (cmd === "open") {
       setChatCommand("open");
       return;
@@ -177,7 +203,6 @@ function App() {
       return;
     }
 
-    // Card flip command
     if (cmd.includes("flip")) {
       setFlipCard(prev => !prev);
       return;
@@ -192,7 +217,6 @@ function App() {
     else if (cmd.includes("analytics")) navigate("/analytics");
   };
 
-  // ────────────── STRING SIMILARITY CHECK ──────────────
   const stringSimilarity = (a, b) => {
     if (!a || !b) return 0;
     let longer = a.length > b.length ? a : b;
@@ -204,23 +228,39 @@ function App() {
     return same / longer.length;
   };
 
+  // Check if we're on auth pages
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
+
   return (
     <div className="App">
-      <FloatingChat 
-        ref={chatRef}
-        pendingBobbyMessage={pendingBobbyMessage}
-        chatCommand={chatCommand}
-        onChatCommand={() => setChatCommand(null)}
-      />
+      {/* Show AuthDetails and FloatingChat only on protected pages */}
+      {!isAuthPage && (
+        <>
+          <AuthDetails />
+          <FloatingChat
+            ref={chatRef}
+            pendingBobbyMessage={pendingBobbyMessage}
+            chatCommand={chatCommand}
+            onChatCommand={() => setChatCommand(null)}
+          />
+        </>
+      )}
+
       <Routes>
-        <Route path="/" element={<Dashboard flipCard={flipCard} onFlipCard={() => setFlipCard(prev => !prev)} />} />
-        <Route path="/blik" element={<Blik />} />
-        <Route path="/trans" element={<Trans />} />
-        <Route path="/currency" element={<Currency />} />
-        <Route path="/support" element={<Support />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/analytics" element={<Analitics />}/>
-        <Route path="/contacts" element={<Contacts />}/>
+        {/* Public routes */}
+        <Route path="/login" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
+
+        {/* Protected routes - require authentication */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<Dashboard flipCard={flipCard} onFlipCard={() => setFlipCard(prev => !prev)} />} />
+          <Route path="/blik" element={<Blik />} />
+          <Route path="/trans" element={<Trans />} />
+          <Route path="/currency" element={<Currency />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/analytics" element={<Analitics />} />
+          <Route path="/contacts" element={<Contacts />} />
+        </Route>
       </Routes>
     </div>
   );

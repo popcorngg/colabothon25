@@ -1,14 +1,19 @@
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-const app = firebase.initializeApp({
-  apiKey: "AIzaSyDMsMfpHoQZMHR7262DBf9tJOUKv2IIO44",
-  authDomain: "bipboop-bb857.firebaseapp.com",
-  projectId: "bipboop-bb857",
-  storageBucket: "bipboop-bb857.appspot.com",
-  messagingSenderId: "615732265160",
-  appId: "1:615732265160:web:b90e1fdb4352e5f55a25fd"
-});
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCxcs1Q3gFNjmyzely3oBPiozVrbN1-XlI",
+  authDomain: "http://localhost:3000/login",
+  projectId: "bank-9f545",
+  storageBucket: "bank-9f545.firebasestorage.app",
+  messagingSenderId: "342830051086",
+  appId: "1:342830051086:web:0a4986713b0053203a315f"
+};
 
-export const auth = app.auth();
-export default firebase;
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
