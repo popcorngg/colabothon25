@@ -30,6 +30,7 @@ export default function Dashboard({ flipCard, onFlipCard }) {
   const handleTrans = () => nav('/trans');
   const handleAnal = () => nav('/analytics');
   const handleCont = () => nav('/contacts');
+  const handleStocks = () => nav('/stocks');
 
   const handleNeuralAction = async () => {
     if (!neuralInput.trim()) return;
@@ -144,6 +145,13 @@ export default function Dashboard({ flipCard, onFlipCard }) {
         <button className="analysisBtn" onClick={handleAnal}>
           <span className="btn-icon">📄</span>
           <span className="btn-text">Document Analyst</span>
+          <span className="btn-arrow">→</span>
+        </button>
+
+        {/* Stocks page */}
+        <button className="stocksBtn" onClick={handleStocks}>
+          <span className="btn-icon">📈</span>
+          <span className="btn-text">Stocks</span>
           <span className="btn-arrow">→</span>
         </button>
 

@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './anal.css';
 import logo from '../dash/logo.png';
 
-export default function Anal() {
+export default function Anal({ analyzeFile, onAnalyzeFile }) {
   const nav = useNavigate();
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -87,18 +87,8 @@ export default function Anal() {
       window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
-
-      // Автоматическое определение языка
-      // Можно улучшить, определяя язык по первым словам текста
-      if (text.match(/[а-яА-ЯЁё]/)) {
-        utterance.lang = 'ru-RU'; // Русский
-      } else if (text.match(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/)) {
-        utterance.lang = 'pl-PL'; // Польский
-      } else {
-        utterance.lang = 'en-US'; // Английский по умолчанию
-      }
-
-      utterance.rate = 0.9; // Немного медленнее для лучшего понимания
+      utterance.lang = 'en-US';
+      utterance.rate = 0.9;
       utterance.pitch = 1.0;
 
       utterance.onstart = () => setIsSpeaking(true);

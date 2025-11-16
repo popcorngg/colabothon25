@@ -12,10 +12,15 @@ import FloatingChat from './components/FloatingChat';
 import { auth } from './firebase';
 import Analitics from "./pages/analitics/anal";
 import Contacts from "./pages/contacts/cont";
+<<<<<<< HEAD
 import SignIn from "./pages/auth/SignIn.jsx";
 import SignUp from "./pages/auth/SignUp.jsx";
 import AuthDetails from "./pages/auth/AuthDetails.jsx";
 import "./pages/auth/AuthDetails.css";
+=======
+import Stocks from "./pages/stocks/stocks";
+
+>>>>>>> 295c88f06c79a7c8ab6c58c6ccdeeab9469d1f15
 
 function ProtectedRoute() {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -65,6 +70,9 @@ function App() {
   const [pendingBobbyMessage, setPendingBobbyMessage] = useState(null);
   const [chatCommand, setChatCommand] = useState(null);
   const [flipCard, setFlipCard] = useState(false);
+  const [sendMoney, setSendMoney] = useState(false);
+  const [sendMessage, setSendMessage] = useState(false);
+  const [analyzeFile, setAnalyzeFile] = useState(false);
   const { speak } = useSpeech();
   const chatRef = useRef(null);
 
@@ -208,11 +216,40 @@ function App() {
       return;
     }
 
+    // Send money command
+    if (cmd.includes("send") && cmd.includes("money")) {
+      setSendMoney(true);
+      navigate("/contacts");
+      return;
+    }
+
+    // Send message command
+    if (cmd.includes("message")) {
+      setSendMessage(true);
+      navigate("/contacts");
+      return;
+    }
+
+    // Analyze file command
+    if (cmd.includes("analyze") || cmd.includes("analysis")) {
+      setAnalyzeFile(true);
+      navigate("/analytics");
+      // Trigger file picker immediately within voice handler context
+      setTimeout(() => {
+        const fileInput = document.getElementById('file-input');
+        if (fileInput) {
+          fileInput.click();
+        }
+      }, 500);
+      return;
+    }
+
     if (cmd.includes("dashboard") || cmd.includes("back") || cmd.includes("main page")) navigate("/");
     else if (cmd.includes("transactions")) navigate("/trans");
     else if (cmd.includes("currency")) navigate("/currency");
     else if (cmd.includes("bleak") || cmd.includes("blik")) navigate("/blik");
     else if (cmd.includes("support")) navigate("/support");
+    else if (cmd.includes("stocks")) navigate("/stocks");
     else if (cmd.includes("contacts")) navigate("/contacts");
     else if (cmd.includes("analytics")) navigate("/analytics");
   };
@@ -247,6 +284,7 @@ function App() {
       )}
 
       <Routes>
+<<<<<<< HEAD
         {/* Public routes */}
         <Route path="/login" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
@@ -261,6 +299,17 @@ function App() {
           <Route path="/analytics" element={<Analitics />} />
           <Route path="/contacts" element={<Contacts />} />
         </Route>
+=======
+        <Route path="/" element={<Dashboard flipCard={flipCard} onFlipCard={() => setFlipCard(prev => !prev)} />} />
+        <Route path="/blik" element={<Blik />} />
+        <Route path="/trans" element={<Trans />} />
+        <Route path="/currency" element={<Currency />} />
+        <Route path="/support" element={<Support />} />
+        <Route path="/stocks" element={<Stocks />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/analytics" element={<Analitics analyzeFile={analyzeFile} onAnalyzeFile={() => setAnalyzeFile(false)} />}/>
+        <Route path="/contacts" element={<Contacts sendMoney={sendMoney} onSendMoney={() => setSendMoney(false)} sendMessage={sendMessage} onSendMessage={() => setSendMessage(false)} />}/>
+>>>>>>> 295c88f06c79a7c8ab6c58c6ccdeeab9469d1f15
       </Routes>
     </div>
   );
